@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>D&D 2024 Character Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ============= HOME ============= -->
+<div id="home" class="screen active">
+  <div style="text-align:center;padding:20px 0 14px">
+    <h1 style="margin:0 0 4px 0;font-size:24px;color:var(--accent2)">Character Sheets</h1>
+    <div class="muted" style="font-size:12px">D&D 2024 · Player's Handbook</div>
+  </div>
+  <div id="charlist"></div>
+  <button class="btn primary full" onclick="goCreate()" style="margin-top:12px">+ New Character</button>
+</div>
+
+<!-- ============= CREATE ============= -->
+<div id="create" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <button class="btn sm" onclick="cwBack()">← Back</button>
+    <div class="cin" style="font-size:11px;color:var(--accent);letter-spacing:1px" id="cstep">1/7</div>
+  </div>
+  <h2 style="margin:0 0 12px 0;font-size:18px;color:var(--accent2)" id="ctitle">New Character</h2>
+  <div id="cbody"></div>
+</div>
+
+<!-- ============= SHEET ============= -->
+<div id="sheet" class="screen">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <button class="btn sm" onclick="goHome()">← Home</button>
+    <div class="row">
+      <button class="restbtn" onclick="shortRest()" title="Short Rest"><div class="ri">☽</div><div class="rl">Short Rest</div></button>
+      <button class="restbtn" onclick="longRest()" title="Long Rest"><div class="ri"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="6" fill="currentColor"/></svg></div><div class="rl">Long Rest</div></button>
+    </div>
+  </div>
+
+  <!-- Header card -->
+  <div class="card" id="headcard"></div>
+
+  <!-- Tabs -->
+  <div class="tabs" id="tabs"></div>
+  <div id="tab0"></div>
+  <div id="tab1" style="display:none"></div>
+  <div id="tab2" style="display:none"></div>
+  <div id="tab3" style="display:none"></div>
+  <div id="tab4" style="display:none"></div>
+  <div id="tab5" style="display:none"></div>
+  <div id="tab6" style="display:none"></div>
+  <div id="tab7" style="display:none"></div>
+</div>
+
+<!-- ============= MODAL ============= -->
+<div class="modal-bg" id="modalbg" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal">
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+    <div class="modal-ft" id="modal-ft"></div>
+  </div>
+</div>
+
+<!-- ============= THEME ============= -->
+<button id="themebtn" onclick="toggleTheme()">☀︎</button>
+<span id="themename" style="display:none">Dark</span>
+<button id="unitsbtn" onclick="toggleUnits()" title="Toggle feet ↔ meters">ft</button>
+
+<!-- Scripts: load in order. data.js MUST come first. -->
+<script src="js/data.js"></script>
+<script src="js/core.js"></script>
+<script src="js/create.js"></script>
+<script src="js/sheet.js"></script>
+<script src="js/inventory.js"></script>
+<script src="js/features.js"></script>
+
+</body>
+</html>
