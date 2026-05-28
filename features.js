@@ -1,6 +1,8 @@
 function renderFeatures(c,cls,lvl,p){
   let h='<div class="card"><div class="ct">Class Features</div>';
-  const classFeatsNonCombat=(cls.features||[]).filter(f=>f.lvl<=lvl && !isCombatFeature(f));
+  const classFeatsNonCombat=(cls.features||[]).filter(f=>
+    f.lvl<=lvl && !isCombatFeature(f) && !f.desc.includes("put it in the 'Class' field")
+  );
   classFeatsNonCombat.forEach(f=>{
     const hasChoices=f.choices&&f.choices.length;
     const btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
@@ -17,38 +19,20 @@ function renderFeatures(c,cls,lvl,p){
       h+='</div>';
     }
   }
+  // Race: only overview
   const race=getRace(c.race);
-  if(race&&race.traits&&race.traits.length){
-    const available=race.traits.filter(t=>(t.lvl||1)<=lvl && t.desc && !isCombatFeature(t));
-    if(available.length){
-      h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(race.name)} Traits</div>`;
-      available.forEach(t=>{
-        const hasChoices=t.choices&&t.choices.length;
-        const btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('race','${esc(t.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
-        h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">${esc(t.n)} <span class="lvtag">${t.lvl&&t.lvl>1?"lv "+t.lvl+" ":""}▾</span>${btn}</div><div class="od">${esc(t.desc)}</div></div>`;
-      });
-      h+='</div>';
-    }
+  if(race&&race.trait){
+    h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(race.name)}</div>
+      <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Overview <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(race.trait)}</div></div>
+    </div>`;
   }
+  // Subrace: only overview
   if(c.subrace){
     const sr=getSubrace(c.subrace);
-    if(sr){
-      h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(sr.name)} (Lineage)</div>`;
-      if(sr.trait){
-        h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Overview <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(sr.trait)}</div></div>`;
-      }
-      if(sr.dmgres&&sr.dmgres.length){
-        h+=`<div class="opt open"><div class="on" style="color:var(--magic)">Damage Resistance</div><div class="od">${sr.dmgres.map(esc).join(", ")}</div></div>`;
-      }
-      if(sr.features){
-        const avail=sr.features.filter(f=>(f.lvl||1)<=lvl && f.desc && !isCombatFeature(f));
-        avail.forEach(f=>{
-          const hasChoices=f.choices&&f.choices.length;
-          const btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('subrace','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
-          h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">${esc(f.n)} <span class="lvtag">${f.lvl&&f.lvl>1?"lv "+f.lvl+" ":""}▾</span>${btn}</div><div class="od">${esc(f.desc)}</div></div>`;
-        });
-      }
-      h+='</div>';
+    if(sr&&sr.trait){
+      h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(sr.name)}</div>
+        <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Overview <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(sr.trait)}</div></div>
+      </div>`;
     }
   }
 
@@ -91,25 +75,30 @@ function renderFeatures(c,cls,lvl,p){
   h+=`<button class="btn sm" onclick="addLang()" style="margin-top:8px;width:100%">+ Add Language</button>`;
   h+='</div>';
 
-  const bg=getBackground(c.bg);
-  if(bg){
-    h+=`<div class="card"><div class="ct">Background — ${esc(bg.name)}</div>`;
-    if(bg.skills)h+=`<div class="opt open"><div class="on">Skills</div><div class="od">${bg.skills.map(esc).join(", ")}</div></div>`;
-    if(bg.tools)h+=`<div class="opt open"><div class="on">Tools</div><div class="od">${bg.tools.map(esc).join(", ")}</div></div>`;
-    if(bg.feat){
-      const featKey=bg.feat.replace(/\s*\[Origin\]\s*$/i,"").toLowerCase();
-      const featData=DATA.feats.find(f=>f.name.toLowerCase().replace(/\s*\[origin\]\s*$/i,"")===featKey);
-      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Origin Feat: ${esc(bg.feat)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
-    }
-    if(bg.description)h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(bg.name)} Lore <span class="lvtag">▾</span></div><div class="od">${esc(bg.description)}</div></div>`;
-    h+='</div>';
-  }
   el("tab1").innerHTML=h;
 }
 
 // ======================================================================
-// TAB 5: NOTES
+// TAB 5: EQUIP
 // ======================================================================
+function _collectResistances(c){
+  const res=new Set();
+  const race=getRace(c.race);
+  if(race&&race.dmgres)race.dmgres.forEach(r=>res.add(r));
+  if(c.subrace){const sr=getSubrace(c.subrace);if(sr&&sr.dmgres)sr.dmgres.forEach(r=>res.add(r));}
+  const eqSlots=c.equipped_slots||{};
+  Object.values(eqSlots).forEach(v=>{
+    if(typeof v!=="number")return;
+    const mi=(c.magic_items||[])[v];if(!mi)return;
+    const def=MAGIC_ITEMS_DB.find(x=>x._key===mi.key);
+    const fixed=typeof FIXED_MAGIC_DMGRES!=="undefined"?FIXED_MAGIC_DMGRES[mi.key]||[]:[];
+    const instRes=mi.dmgres||[];
+    const defRes=(def&&def.dmgres)||[];
+    [...fixed,...instRes,...defRes].forEach(r=>res.add(r));
+  });
+  return [...res].sort();
+}
+
 function renderEquipment(c,cls,lvl,p){
   c.equipped_slots=c.equipped_slots||{};
   const slots=[
@@ -124,7 +113,7 @@ function renderEquipment(c,cls,lvl,p){
     {key:"shield",label:"Mão Sec. (Escudo)",icon:"🛡"}
   ];
   let h=`<div class="card"><div class="ct">Slots Equipados</div>
-    <div class="muted" style="font-size:11px;margin-bottom:8px">Toque em um slot para equipar ou trocar um item mágico do seu inventário.</div>`;
+    <div class="muted" style="font-size:11px;margin-bottom:8px">Toque em um slot para equipar ou trocar um item do seu inventário.</div>`;
   slots.forEach(s=>{
     const equippedIdx=c.equipped_slots[s.key];
     let equippedHtml='<span class="muted" style="font-size:12px">(vazio)</span>';
@@ -137,6 +126,12 @@ function renderEquipment(c,cls,lvl,p){
           equippedHtml=`<span style="font-weight:600">${esc(def.name)}</span>${bonus}`;
         }
       }
+    } else if(s.key==="armor"&&c.armor){
+      const arm=getArmor(c.armor);
+      if(arm)equippedHtml=`<span style="font-weight:600">${esc(arm.name)}</span> <span class="muted" style="font-size:11px">${esc(arm.type)}, CA ${arm.ac}</span>`;
+    } else if(s.key==="shield"&&c.shield){
+      const invShield=c.inv_shield?(c.inv||[]).find(x=>x.id===c.inv_shield):null;
+      equippedHtml=`<span style="font-weight:600">${invShield?esc(invShield.name):"Escudo"}</span> <span class="muted" style="font-size:11px">+2 CA</span>`;
     }
     h+=`<div class="opt" onclick="openSlotPicker('${s.key}')" style="cursor:pointer">
       <div class="on" style="display:flex;align-items:center;gap:8px">
@@ -148,12 +143,22 @@ function renderEquipment(c,cls,lvl,p){
   });
   h+='</div>';
 
+  // Resistências
+  const res=_collectResistances(c);
+  h+=`<div class="card"><div class="ct">Resistências</div>`;
+  if(!res.length){
+    h+='<div class="muted" style="font-size:12px">Nenhuma resistência. Geradas automaticamente por Raça, Subraça e Itens equipados.</div>';
+  } else {
+    h+=`<div style="font-size:13px">${res.map(r=>`<span class="tag magic" style="margin:2px">${esc(r)}</span>`).join(" ")}</div>`;
+  }
+  h+='</div>';
+
   // Armas portadas
   const carrying=(c.magic_items||[]).map((mi,i)=>({mi,i})).filter(x=>{
     const d=MAGIC_ITEMS_DB.find(y=>y._key===x.mi.key);return d&&d.slot==="weapon"&&x.mi.carrying;
   });
   h+=`<div class="card"><div class="ct">Armas Mágicas Portando</div>
-    <div class="muted" style="font-size:11px;margin-bottom:8px">Armas mágicas que você está portando aparecem automaticamente no Combat. Gerencie no Inventário.</div>`;
+    <div class="muted" style="font-size:11px;margin-bottom:8px">Armas mágicas portando aparecem automaticamente no Combat. Gerencie no Inventário.</div>`;
   if(!carrying.length){h+='<div class="muted" style="font-size:12px">Nenhuma arma mágica sendo portada.</div>';}
   else{
     carrying.forEach(({mi,i})=>{
@@ -169,30 +174,52 @@ function renderEquipment(c,cls,lvl,p){
   el("tab5").innerHTML=h;
 }
 
+function equipNormalToSlot(slotKey,invId){
+  const c=chars[currentId];c.equipped_slots=c.equipped_slots||{};
+  const it=(c.inv||[]).find(x=>x.id===invId);if(!it)return;
+  // Clear magic item from this slot if any
+  delete c.equipped_slots[slotKey];
+  if(slotKey==="armor"){c.armor=it.key;}
+  else if(slotKey==="shield"){c.shield=true;c.inv_shield=invId;}
+  saveChars();closeModal();renderSheet();
+}
+
 function openSlotPicker(slotKey){
   const c=chars[currentId];c.magic_items=c.magic_items||[];c.equipped_slots=c.equipped_slots||{};
-  // Itens elegíveis: do banco com slot compatível, presentes no inventário do personagem
-  // ring1 e ring2 ambos aceitam itens de slot "ring"
   const acceptSlot=(slotKey==="ring1"||slotKey==="ring2")?"ring":slotKey;
+
+  let rows="";
+
+  // Normal items for armor/shield slots
+  if(slotKey==="armor"||slotKey==="shield"){
+    const cat=slotKey;
+    const normalItems=(c.inv||[]).filter(x=>x.cat===cat);
+    if(normalItems.length){
+      rows+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Itens Normais</div>`;
+      normalItems.forEach(it=>{
+        const arm=cat==="armor"?getArmor(it.key):null;
+        const info=arm?`${arm.type}, CA ${arm.ac}`:"+2 CA";
+        const isCur=(cat==="armor"&&c.armor===it.key&&c.equipped_slots[slotKey]==null)||
+                    (cat==="shield"&&c.inv_shield===it.id&&c.equipped_slots[slotKey]==null);
+        const tag=isCur?'<span class="tag ok" style="font-size:10px">Equipado aqui</span>':"";
+        rows+=`<div class="opt" onclick="equipNormalToSlot('${slotKey}','${it.id}')">
+          <div class="on">${esc(it.name)} ${tag}</div>
+          <div class="od" style="display:block;font-size:11px;color:var(--text3)">${esc(info)}</div>
+        </div>`;
+      });
+    }
+    rows+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Itens Mágicos</div>`;
+  }
+
   const eligible=(c.magic_items||[]).map((mi,i)=>{
     const def=MAGIC_ITEMS_DB.find(x=>x._key===mi.key);
     return {mi,i,def};
-  }).filter(x=>x.def && x.def.slot===acceptSlot);
+  }).filter(x=>x.def&&x.def.slot===acceptSlot);
 
-  // Verifica conflitos: o item já está equipado em outro slot?
-  const isEquippedElsewhere=(idx)=>{
-    return Object.entries(c.equipped_slots).some(([k,v])=>v===idx && k!==slotKey);
-  };
+  const isEquippedElsewhere=(idx)=>Object.entries(c.equipped_slots).some(([k,v])=>v===idx&&k!==slotKey);
 
-  let rows="";
-  // Opção "Desequipar"
-  if(c.equipped_slots[slotKey]!=null){
-    rows+=`<div class="opt" onclick="unequipSlot('${slotKey}')" style="border-color:var(--danger,#c44)">
-      <div class="on">✕ Desequipar slot</div>
-    </div>`;
-  }
   if(!eligible.length){
-    rows+='<div class="muted" style="font-size:12px;padding:8px">Nenhum item compatível no inventário. Adicione itens em Inventário → Itens Mágicos.</div>';
+    rows+='<div class="muted" style="font-size:12px;padding:8px">Nenhum item mágico compatível. Adicione em Inventário → Itens Mágicos.</div>';
   } else {
     eligible.forEach(({mi,i,def})=>{
       const bonus=mi.bonus?` <span class="tag accent" style="font-size:10px">+${mi.bonus}</span>`:"";
@@ -205,8 +232,19 @@ function openSlotPicker(slotKey){
       </div>`;
     });
   }
+
+  // Desequipar
+  const hasEquipped=c.equipped_slots[slotKey]!=null||
+    (slotKey==="armor"&&c.armor)||
+    (slotKey==="shield"&&c.shield);
+  if(hasEquipped){
+    rows=`<div class="opt" onclick="unequipSlot('${slotKey}')" style="border-color:var(--danger,#c44);margin-bottom:8px">
+      <div class="on">✕ Desequipar slot</div>
+    </div>`+rows;
+  }
+
   const slotLabels={head:"Capacete",neck:"Colar/Amuleto",cloak:"Capa/Manto",armor:"Armadura",gloves:"Luvas",ring1:"Anel 1",ring2:"Anel 2",boots:"Botas",shield:"Mão Secundária"};
-  openModal("Equipar: "+slotLabels[slotKey], rows, '<button class="btn" onclick="closeModal()">Fechar</button>');
+  openModal("Equipar: "+slotLabels[slotKey],rows,'<button class="btn" onclick="closeModal()">Fechar</button>');
 }
 
 function equipSlot(slotKey,itemIdx){
@@ -223,10 +261,12 @@ function unequipSlot(slotKey){
   const c=chars[currentId];c.equipped_slots=c.equipped_slots||{};
   const idx=c.equipped_slots[slotKey];
   delete c.equipped_slots[slotKey];
-  // Se o item não está em nenhum outro slot, marca como não-equipado
-  if(idx!=null && !Object.values(c.equipped_slots).includes(idx)){
+  if(idx!=null&&!Object.values(c.equipped_slots).includes(idx)){
     const mi=(c.magic_items||[])[idx];if(mi)mi.equipped=false;
   }
+  // Clear normal item
+  if(slotKey==="armor")c.armor="";
+  if(slotKey==="shield"){c.shield=false;c.inv_shield=null;}
   saveChars();closeModal();renderSheet();
 }
 
@@ -270,8 +310,24 @@ function renderCharacter(c){
       </div>
       <input type="file" id="portrait-input" accept="image/*" style="display:none" onchange="uploadPortrait(event)">
     </div>
-  </div>
-  <div class="card">
+  </div>`;
+
+  // Background
+  const bg=getBackground(c.bg);
+  if(bg){
+    h+=`<div class="card"><div class="ct">Background — ${esc(bg.name)}</div>`;
+    if(bg.skills)h+=`<div class="opt open"><div class="on">Skills</div><div class="od">${bg.skills.map(esc).join(", ")}</div></div>`;
+    if(bg.tools)h+=`<div class="opt open"><div class="on">Tools</div><div class="od">${bg.tools.map(esc).join(", ")}</div></div>`;
+    if(bg.feat){
+      const featKey=bg.feat.replace(/\s*\[Origin\]\s*$/i,"").toLowerCase();
+      const featData=DATA.feats.find(f=>f.name.toLowerCase().replace(/\s*\[origin\]\s*$/i,"")===featKey);
+      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Origin Feat: ${esc(bg.feat)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
+    }
+    if(bg.description)h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(bg.name)} Lore <span class="lvtag">▾</span></div><div class="od">${esc(bg.description)}</div></div>`;
+    h+='</div>';
+  }
+
+  h+=`<div class="card">
     <div class="ct">Traits</div>
     <textarea id="char-traits" rows="6" style="min-height:120px;width:100%" placeholder="Personality, ideals, bonds, flaws, appearance..." onblur="saveCharText()">${esc(traits)}</textarea>
   </div>
@@ -383,6 +439,20 @@ function showFeatureChoices(src,featName){
   });
   openModal(feat.n,body,'<button class="btn" onclick="closeModal()">Close</button>');
 }
+
+// ======================================================================
+// TABS — defined here (last file) so all render functions already exist
+// ======================================================================
+const TABS=[
+  {n:"Stats",f:renderStats},
+  {n:"Features",f:renderFeatures},
+  {n:"Combat",f:renderCombat},
+  {n:"Spells",f:renderSpells},
+  {n:"Inventory",f:renderInventory},
+  {n:"Equip",f:renderEquipment},
+  {n:"Notes",f:renderNotes},
+  {n:"Character",f:renderCharacter}
+];
 
 // ======================================================================
 // INIT (wait for DATA to load)

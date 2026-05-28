@@ -503,16 +503,3 @@ function finalizeChar(){
   saveChars();creationState=null;openSheet(id);
 }
 
-// ======================================================================
-// SHEET
-// ======================================================================
-const TABS=[
-  {n:"Stats",f:renderStats},
-  {n:"Features",f:renderFeatures},
-  {n:"Combat",f:renderCombat},
-  {n:"Spells",f:renderSpells},
-  {n:"Inventory",f:renderInventory},
-  {n:"Equip",f:renderEquipment},
-  {n:"Notes",f:renderNotes},
-  {n:"Character",f:renderCharacter}
-];
