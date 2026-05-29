@@ -1,21 +1,23 @@
 /* =========== DARK THEME VARIABLES =========== */
 :root{
-  --bg:#080d1a;--bg2:rgba(13,22,60,0.85);--bg3:rgba(17,30,70,0.9);--card:rgba(10,18,52,0.55);
-  --border:rgba(79,142,247,0.22);--accent:#4f8ef7;--accent2:#93c5fd;
+  --bg:#06080f;--bg2:rgba(255,255,255,0.05);--bg3:rgba(255,255,255,0.09);--card:rgba(255,255,255,0.06);
+  --border:rgba(255,255,255,0.13);--accent:#4f8ef7;--accent2:#93c5fd;
+  --grad:linear-gradient(135deg,#4f8ef7,#8b5cf6);
   --danger:rgba(120,10,10,0.55);--danger2:#f87171;
-  --text:#e2eaff;--text2:#7b9bc8;--text3:#374f72;
+  --text:#e2eaff;--text2:#8ba3cc;--text3:#374f72;
   --ok:#34d399;--info:#60a5fa;--magic:#c084fc;
   --r:8px;--rl:14px;
 }
 *{box-sizing:border-box}
 html,body{min-height:100vh;margin:0;background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px;-webkit-font-smoothing:antialiased;background-attachment:fixed}
 
-/* Dark theme: vivid gradient background so glass blur shows through */
+/* Dark theme: vivid gradient so glass blur has something to show */
 body:not(.modern){
   background-image:
-    radial-gradient(ellipse at 10% 15%, rgba(80,100,255,0.25) 0%, transparent 45%),
-    radial-gradient(ellipse at 90% 80%, rgba(130,50,230,0.2) 0%, transparent 45%),
-    radial-gradient(ellipse at 55% 50%, rgba(30,80,200,0.1) 0%, transparent 55%);
+    radial-gradient(ellipse at 8% 15%,  rgba(70,90,255,0.6)  0%, transparent 42%),
+    radial-gradient(ellipse at 92% 82%, rgba(160,50,255,0.55) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 48%, rgba(20,70,200,0.3)  0%, transparent 52%),
+    radial-gradient(ellipse at 70% 10%, rgba(80,200,255,0.2) 0%, transparent 36%);
 }
 
 h1,h2,h3,.cin{font-family:'Cinzel',serif;font-weight:600}
@@ -29,9 +31,9 @@ h1,h2,h3,.cin{font-family:'Cinzel',serif;font-weight:600}
   border-radius:var(--rl);
   padding:14px;
   margin-bottom:10px;
-  backdrop-filter:blur(18px) saturate(1.4);
-  -webkit-backdrop-filter:blur(18px) saturate(1.4);
-  box-shadow:0 4px 24px rgba(0,0,40,0.25), inset 0 1px 0 rgba(79,142,247,0.12);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  box-shadow:0 4px 28px rgba(0,0,30,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .ct{font-family:'Cinzel',serif;font-size:10px;letter-spacing:1.5px;color:var(--accent);margin-bottom:10px;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -40,21 +42,21 @@ h1,h2,h3,.cin{font-family:'Cinzel',serif;font-weight:600}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 14px;border:1px solid var(--border);border-radius:var(--r);font-family:'Crimson Text',serif;font-size:14px;cursor:pointer;background:var(--bg3);color:var(--text);transition:all .18s;outline:none;-webkit-appearance:none;text-decoration:none}
 .btn:hover,.btn:active{background:var(--card);border-color:var(--accent)}
 
-/* Primary button with glow */
+/* Primary button: blue→purple gradient with glow */
 .btn.primary{
-  background:linear-gradient(135deg,var(--accent),#6aa3ff);
+  background:var(--grad);
   border:none;
   color:#fff;
   font-family:'Cinzel',serif;
   font-size:12px;
   letter-spacing:.5px;
-  box-shadow:0 4px 18px rgba(79,142,247,0.45);
+  box-shadow:0 4px 20px rgba(100,80,255,0.5);
   transition:all .2s;
 }
 .btn.primary:hover{
-  box-shadow:0 6px 28px rgba(79,142,247,0.65);
+  box-shadow:0 6px 32px rgba(120,80,255,0.7);
   transform:translateY(-1px);
-  opacity:.95;
+  filter:brightness(1.1);
 }
 
 .btn.sm{padding:4px 10px;font-size:12px;font-family:'Cinzel',serif;letter-spacing:.3px}
@@ -105,7 +107,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 .hprow{display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:6px;align-items:center}
 .hpcell{display:flex;flex-direction:column;align-items:center;text-align:center}
 .hpcell-inner{display:flex;align-items:center;gap:4px;justify-content:center}
-.hpv{font-family:'Cinzel',serif;font-size:20px;color:var(--accent2);line-height:1}
+.hpv{font-family:'Cinzel',serif;font-size:20px;line-height:1;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .hpl{font-size:9px;letter-spacing:1.2px;color:var(--text2);text-transform:uppercase;margin-top:4px}
 .hpi{width:78px;padding:4px 4px;font-family:'Cinzel',serif;font-size:28px;text-align:center;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);color:var(--text);-moz-appearance:textfield}
 .hpi-sm{font-size:18px;width:50px}
@@ -130,7 +132,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 /* =========== TABS =========== */
 .tabs{display:flex;overflow-x:auto;gap:2px;margin-bottom:10px;border-bottom:1px solid var(--border);padding-bottom:0}
 .tab{padding:8px 12px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.6px;cursor:pointer;background:transparent;color:var(--text2);border:none;border-bottom:2px solid transparent;white-space:nowrap;text-transform:uppercase;transition:all .15s}
-.tab.active{color:var(--accent2);border-bottom-color:var(--accent);text-shadow:0 0 12px rgba(79,142,247,0.5)}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent);text-shadow:0 0 14px rgba(120,80,255,0.6),0 0 28px rgba(79,142,247,0.3)}
 .tab:hover{color:var(--text)}
 
 /* =========== SKILL ROWS =========== */
@@ -145,7 +147,7 @@ input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:po
 .acr .ad{font-size:11px;color:var(--text3);margin-top:2px}
 .pips{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 .pip{width:18px;height:18px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);transition:all .18s;cursor:pointer;flex-shrink:0}
-.pip.on{background:var(--accent);border-color:var(--accent2);box-shadow:0 0 10px rgba(79,142,247,.6)}
+.pip.on{background:var(--grad);border-color:rgba(139,92,246,0.6);box-shadow:0 0 12px rgba(120,80,255,.65)}
 .pip.off{background:transparent}
 .pip:hover{transform:scale(1.2);border-color:var(--accent);box-shadow:0 0 6px rgba(79,142,247,0.4)}
 
@@ -219,18 +221,26 @@ hr{border:none;border-top:1px solid var(--border);margin:10px 0}
   display:flex;
   align-items:center;
   gap:12px;
-  backdrop-filter:blur(18px) saturate(1.4);
-  -webkit-backdrop-filter:blur(18px) saturate(1.4);
-  box-shadow:0 4px 20px rgba(0,0,40,0.2), inset 0 1px 0 rgba(79,142,247,0.1);
+  backdrop-filter:blur(20px) saturate(1.8);
+  -webkit-backdrop-filter:blur(20px) saturate(1.8);
+  box-shadow:0 4px 24px rgba(0,0,30,0.4), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .bigcard:hover{
-  border-color:var(--accent);
-  box-shadow:0 6px 30px rgba(79,142,247,.28), inset 0 1px 0 rgba(79,142,247,0.15);
+  border-color:rgba(139,92,246,0.5);
+  box-shadow:0 8px 36px rgba(120,80,255,.35), inset 0 1px 0 rgba(255,255,255,0.18);
   transform:translateY(-2px);
 }
 .bigcard .bn{font-family:'Cinzel',serif;font-size:16px;color:var(--accent2);margin-bottom:2px}
 .bigcard .bd{font-size:12px;color:var(--text2)}
-.bigcard .bl{margin-left:auto;font-family:'Cinzel',serif;font-size:24px;color:var(--accent)}
+.bigcard .bl{
+  margin-left:auto;
+  font-family:'Cinzel',serif;
+  font-size:24px;
+  background:var(--grad);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
 
 /* =========== LIGHT THEME =========== */
 body.modern{
