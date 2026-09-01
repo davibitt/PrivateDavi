@@ -924,7 +924,7 @@ function pickFightingStyle(){
       ?`onclick="event.stopPropagation();removeFightingStyle('${esc(f._key)}')"`
       :`onclick="addFeatToChar('${esc(f._key)}');pickFightingStyle();"`;
     return `<div class="opt" ${action}>
-      <div class="on">${esc(f.name.replace(/^Fighting Style: /,""))} ${added?'<span class="tag ok">✓ toque para remover</span>':''}</div>
+      <div class="on">${esc(f.name.replace(/^(Fighting Style|Estilo de Luta):\s*/,""))} ${added?'<span class="tag ok">✓ toque para remover</span>':''}</div>
       <div class="od" style="display:block">${esc(f.description)}</div>
     </div>`;
   }).join("");
