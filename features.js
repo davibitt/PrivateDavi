@@ -66,24 +66,24 @@ function renderFeatures(c,cls,lvl,p){
   }
 
   // Feats from background and other sources
-  const myFeats=getCharFeats(c);
-  const bgFeat=(c.bg&&(DATA.backgrounds.find(b=>b._key===c.bg)||{}).feat)||"";
+  const myFeats=getCharFeats(c); // array of _keys
+  const bgFeatKey=(c.bg&&(DATA.backgrounds.find(b=>b._key===c.bg)||{}).feat)||"";
   h+=`<div class="card"><div class="ct" style="color:var(--accent2)">Feats <button class="btn sm" onclick="searchFeats()">+ Add</button></div>`;
   if(!myFeats.length){h+='<div class="muted" style="font-size:12px">No feats yet. Tap "+ Add" to choose one.</div>'}
-  myFeats.forEach(fname=>{
-    const cleanKey=fname.replace(/\s*\[.*?\]\s*$/,"").toLowerCase().trim();
-    const fd=DATA.feats.find(f=>f._key===cleanKey||f.name.toLowerCase()===fname.toLowerCase());
+  myFeats.forEach(key=>{
+    const fd=DATA.feats.find(f=>f._key===key);
+    const displayName=fd?fd.name:key;
     const desc=fd?fd.description:"";
-    const isTough=/^tough\b/i.test(fname);
-    const choiceInfo=CHOICE_FEATS.find(cf=>cf.match.test(fname));
+    const isTough=key==="tough";
+    const choiceInfo=CHOICE_FEATS.find(cf=>cf.match.test(key));
     let badge="";
     if(fd&&fd.epic)badge+=' <span class="tag warn">⭐ Dádiva Épica</span>';
     if(isTough)badge+=` <span class="tag ok">+${2*lvl} HP applied</span>`;
     else if(choiceInfo)badge+=` <span class="tag magic">⚠ Action needed</span>`;
-    const isFromBg=bgFeat&&fname===bgFeat;
-    const rmIdx=(c.feats||[]).indexOf(fname);
+    const isFromBg=bgFeatKey&&key===bgFeatKey;
+    const rmIdx=(c.feats||[]).indexOf(key);
     const rmBtn=(!isFromBg&&rmIdx>=0)?` <button class="btn sm" onclick="event.stopPropagation();rmFeat(${rmIdx})" style="padding:2px 8px">×</button>`:"";
-    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(fname)}${badge}${rmBtn}<span class="tog">▾</span></div><div class="od">${esc(desc)}${choiceInfo?`<div style="margin-top:8px;padding:6px;background:var(--bg2);border-left:2px solid var(--magic);font-size:12px"><strong>What to do:</strong> ${esc(choiceInfo.what)}. Track this manually in your Notes tab.</div>`:""}</div></div>`;
+    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(displayName)}${badge}${rmBtn}<span class="tog">▾</span></div><div class="od">${esc(desc)}${choiceInfo?`<div style="margin-top:8px;padding:6px;background:var(--bg2);border-left:2px solid var(--magic);font-size:12px"><strong>What to do:</strong> ${esc(choiceInfo.what)}. Track this manually in your Notes tab.</div>`:""}</div></div>`;
   });
   h+='</div>';
 
@@ -349,9 +349,9 @@ function renderCharacter(c){
     if(bg.skills)h+=`<div class="opt open"><div class="on">Skills</div><div class="od">${bg.skills.map(esc).join(", ")}</div></div>`;
     if(bg.tools)h+=`<div class="opt open"><div class="on">Tools</div><div class="od">${bg.tools.map(esc).join(", ")}</div></div>`;
     if(bg.feat){
-      const featKey=bg.feat.replace(/\s*\[Origin\]\s*$/i,"").toLowerCase();
-      const featData=DATA.feats.find(f=>f.name.toLowerCase().replace(/\s*\[origin\]\s*$/i,"")===featKey);
-      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Origin Feat: ${esc(bg.feat)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
+      const featData=DATA.feats.find(f=>f._key===bg.feat);
+      const featName=featData?featData.name:bg.feat;
+      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Origin Feat: ${esc(featName)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
     }
     if(bg.description)h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(bg.name)} Lore <span class="lvtag">▾</span></div><div class="od">${esc(bg.description)}</div></div>`;
     h+='</div>';

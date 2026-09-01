@@ -19,6 +19,7 @@ function applyUnitsToDom(root){
 }
 
 function _renderSheetInner(c){
+  migrateFeatNamesToKeys(c);
   const cls=getClass(c.class);const race=getRace(c.race);const sr=c.subrace?getSubrace(c.subrace):null;
   const lvl=c.level;const p=profBonus(lvl);
   // Compute combat stats (AC/init/passive)
@@ -124,7 +125,21 @@ function saveHP(){
 }
 function adjHP(d){const c=chars[currentId];c.hp_cur=Math.max(0,Math.min(effectiveMaxHP(c),c.hp_cur+d));saveChars();renderSheet()}
 
-// Returns list of feat names the character has (from background + manual feats)
+// One-time cleanup: c.feats used to store display names instead of _key, which breaks
+// once feat names get translated. Converts any leftover name entries to their _key.
+function migrateFeatNamesToKeys(c){
+  if(!c.feats||!c.feats.length)return;
+  let changed=false;
+  c.feats=c.feats.map(entry=>{
+    if(DATA.feats.some(f=>f._key===entry))return entry;
+    const match=DATA.feats.find(f=>f.name.toLowerCase()===entry.toLowerCase());
+    if(match){changed=true;return match._key;}
+    return entry;
+  });
+  if(changed)saveChars();
+}
+// Returns the list of feat _keys the character has (from background + manual feats).
+// Keyed by _key (not display name) so translated feat names never break these checks.
 function getCharFeats(c){
   const list=[];
   if(c.bg){
@@ -136,14 +151,14 @@ function getCharFeats(c){
 }
 // Check if the character has the Tough feat (auto from any source)
 function hasToughFeat(c){
-  return getCharFeats(c).some(f=>/^tough\b/i.test(f));
+  return getCharFeats(c).includes("tough");
 }
 // Returns a Set of fighting style short-keys the character has picked (e.g. "defense","archery","dueling")
 function getFightingStyles(c){
   const set=new Set();
-  getCharFeats(c).forEach(f=>{
-    const m=/^fighting style:\s*(.+)$/i.exec(f.trim());
-    if(m)set.add(m[1].toLowerCase().trim());
+  getCharFeats(c).forEach(key=>{
+    const m=/^fighting style:\s*(.+)$/i.exec(key.trim());
+    if(m)set.add(m[1].trim());
   });
   return set;
 }
@@ -166,18 +181,18 @@ function effectiveMaxHP(c){
   if(hasToughFeat(c))hp+=2*(c.level||1);
   return hp;
 }
-// List of feats that grant choices (player must manually configure)
+// List of feats that grant choices (player must manually configure). Matched by _key.
 const CHOICE_FEATS=[
-  {match:/magic initiate/i,what:"Choose 2 cantrips and 1 level-1 spell from the listed class spell list"},
-  {match:/^skilled\b/i,what:"Choose 3 skill or tool proficiencies"},
-  {match:/^crafter\b/i,what:"Choose 3 Artisan's Tools to gain proficiency in"},
-  {match:/^musician\b/i,what:"Choose 3 Musical Instruments to gain proficiency in"},
+  {match:/^magic initiate/i,what:"Choose 2 cantrips and 1 level-1 spell from the listed class spell list"},
+  {match:/^skilled$/i,what:"Choose 3 skill or tool proficiencies"},
+  {match:/^crafter$/i,what:"Choose 3 Artisan's Tools to gain proficiency in"},
+  {match:/^musician$/i,what:"Choose 3 Musical Instruments to gain proficiency in"},
 ];
 function getChoiceFeats(c){
   const r=[];
-  getCharFeats(c).forEach(name=>{
-    const m=CHOICE_FEATS.find(cf=>cf.match.test(name));
-    if(m)r.push({name,what:m.what});
+  getCharFeats(c).forEach(key=>{
+    const m=CHOICE_FEATS.find(cf=>cf.match.test(key));
+    if(m)r.push({key,what:m.what});
   });
   return r;
 }
@@ -898,10 +913,10 @@ function addSpell(key){
 }
 function pickFightingStyle(){
   const c=chars[currentId];
-  const existing=new Set(getCharFeats(c).map(f=>f.toLowerCase()));
+  const existing=new Set(getCharFeats(c));
   const styles=DATA.feats.filter(f=>f.styleGroup==="fighting"&&(!f.classOnly||f.classOnly===c.class));
   let rows=styles.map(f=>{
-    const added=existing.has(f.name.toLowerCase());
+    const added=existing.has(f._key);
     const action=added
       ?`onclick="event.stopPropagation();removeFightingStyle('${esc(f._key)}')"`
       :`onclick="addFeatToChar('${esc(f._key)}');pickFightingStyle();"`;
@@ -913,9 +928,8 @@ function pickFightingStyle(){
   openModal("Escolher Estilo de Luta",rows,'<button class="btn" onclick="closeModal()">Fechar</button>');
 }
 function removeFightingStyle(key){
-  const f=DATA.feats.find(x=>x._key===key);if(!f)return;
   const c=chars[currentId];if(!c.feats)return;
-  const idx=c.feats.indexOf(f.name);
+  const idx=c.feats.indexOf(key);
   if(idx<0)return;
   c.feats.splice(idx,1);
   saveChars();renderSheet();
@@ -929,14 +943,14 @@ function searchFeats(){
 }
 function filterFeatSearch(){
   const q=(el("ftq").value||"").toLowerCase();
-  const c=chars[currentId];const existing=new Set(getCharFeats(c).map(f=>f.toLowerCase()));
+  const c=chars[currentId];const existing=new Set(getCharFeats(c));
   const results=DATA.feats.filter(f=>!q||f.name.toLowerCase().indexOf(q)>=0||(f.description||"").toLowerCase().indexOf(q)>=0)
     .sort((a,b)=>a.name.localeCompare(b.name));
   let h="";
   if(!results.length){h='<div class="muted" style="padding:8px">No feats found.</div>'}
   else{
     results.forEach(f=>{
-      const added=existing.has(f.name.toLowerCase());
+      const added=existing.has(f._key);
       h+=`<div class="spl" ${added?"":`onclick="addFeatToChar('${esc(f._key)}')"`} style="${added?'opacity:.5':''}">
         <div class="sph"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;flex:1">
           <span class="spn">${esc(f.name)}</span>${f.epic?'<span class="tag warn">⭐ Épica</span>':''}
@@ -950,8 +964,8 @@ function filterFeatSearch(){
 function addFeatToChar(key){
   const f=DATA.feats.find(x=>x._key===key);if(!f)return;
   const c=chars[currentId];c.feats=c.feats||[];
-  if(c.feats.indexOf(f.name)>=0)return;
-  c.feats.push(f.name);
+  if(c.feats.indexOf(key)>=0)return;
+  c.feats.push(key);
   saveChars();if(el("ftq"))filterFeatSearch();renderSheet();
 }
 function beastStatblockHtml(b){
