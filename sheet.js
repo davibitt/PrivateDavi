@@ -872,12 +872,24 @@ function pickFightingStyle(){
   const styles=DATA.feats.filter(f=>f.styleGroup==="fighting"&&(!f.classOnly||f.classOnly===c.class));
   let rows=styles.map(f=>{
     const added=existing.has(f.name.toLowerCase());
-    return `<div class="opt" ${added?"":`onclick="addFeatToChar('${esc(f._key)}');closeModal();"`} style="${added?'opacity:.5':''}">
-      <div class="on">${esc(f.name.replace(/^Fighting Style: /,""))} ${added?'<span class="tag ok">✓</span>':''}</div>
+    const action=added
+      ?`onclick="event.stopPropagation();removeFightingStyle('${esc(f._key)}')"`
+      :`onclick="addFeatToChar('${esc(f._key)}');pickFightingStyle();"`;
+    return `<div class="opt" ${action}>
+      <div class="on">${esc(f.name.replace(/^Fighting Style: /,""))} ${added?'<span class="tag ok">✓ toque para remover</span>':''}</div>
       <div class="od" style="display:block">${esc(f.description)}</div>
     </div>`;
   }).join("");
   openModal("Escolher Estilo de Luta",rows,'<button class="btn" onclick="closeModal()">Fechar</button>');
+}
+function removeFightingStyle(key){
+  const f=DATA.feats.find(x=>x._key===key);if(!f)return;
+  const c=chars[currentId];if(!c.feats)return;
+  const idx=c.feats.indexOf(f.name);
+  if(idx<0)return;
+  c.feats.splice(idx,1);
+  saveChars();renderSheet();
+  pickFightingStyle();
 }
 function searchFeats(){
   let body=`<div class="f"><input type="text" id="ftq" placeholder="Search feats..." oninput="filterFeatSearch()"></div>
