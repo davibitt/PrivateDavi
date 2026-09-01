@@ -127,13 +127,16 @@ function adjHP(d){const c=chars[currentId];c.hp_cur=Math.max(0,Math.min(effectiv
 
 // One-time cleanup: c.feats used to store display names instead of _key, which breaks
 // once feat names get translated. Converts any leftover name entries to their _key.
+// Matches against the ORIGINAL English name pattern (name.toLowerCase() minus a
+// "[Origin]" suffix), not the current (possibly translated) DATA.feats name, since
+// every _key was derived from that original English name and never changes.
 function migrateFeatNamesToKeys(c){
   if(!c.feats||!c.feats.length)return;
   let changed=false;
   c.feats=c.feats.map(entry=>{
     if(DATA.feats.some(f=>f._key===entry))return entry;
-    const match=DATA.feats.find(f=>f.name.toLowerCase()===entry.toLowerCase());
-    if(match){changed=true;return match._key;}
+    const candidate=entry.toLowerCase().replace(/\s*\[origin\]\s*$/i,"").trim();
+    if(DATA.feats.some(f=>f._key===candidate)){changed=true;return candidate;}
     return entry;
   });
   if(changed)saveChars();
