@@ -55,6 +55,45 @@ const SPELL_ABILITY = {
   paladin:"cha", ranger:"wis", warlock:"cha", artificer:"int"
 };
 
+// 2024 PHB "Prepared Spells" tables (fixed per-level count, not Level+Mod)
+const PREPARED_SPELLS_TABLE = {
+  bard:     [4,5,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22],
+  cleric:   [4,5,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22],
+  druid:    [4,5,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22],
+  sorcerer: [2,4,6,7,9,10,11,12,14,15,16,16,17,17,18,18,19,20,21,22],
+  wizard:   [4,5,6,7,9,10,11,12,14,15,16,16,17,18,19,21,22,23,24,25],
+  paladin:  [2,2,4,5,6,6,7,7,9,9,10,10,11,11,12,12,14,14,15,15],
+  ranger:   [2,3,4,5,6,6,7,7,8,8,10,10,11,11,12,12,14,14,15,15],
+  warlock:  [2,3,4,5,6,7,7,8,9,10,11,11,12,12,13,13,14,14,15,15]
+};
+function getPreparedMax(c){
+  const t=PREPARED_SPELLS_TABLE[c.class];
+  return t?t[Math.min(c.level,20)-1]:null;
+}
+
+// Battle Master: maneuvers known & superiority dice count by Fighter level
+function maneuversKnownAtLevel(lvl){
+  if(lvl>=15)return 9;if(lvl>=10)return 7;if(lvl>=7)return 5;if(lvl>=3)return 3;return 0;
+}
+function superiorityDiceCount(lvl){
+  if(lvl>=15)return 6;if(lvl>=7)return 5;if(lvl>=3)return 4;return 0;
+}
+
+// Druid Wild Shape eligibility: which beasts can this character turn into right now?
+function wildShapeEligibleBeasts(c){
+  if(c.class!=="druid"||c.level<2)return[];
+  const lvl=c.level;
+  const isMoon=c.subclass==="moon"&&lvl>=3;
+  let maxCR,allowFly;
+  if(isMoon){maxCR=Math.floor(lvl/3);allowFly=true;}
+  else{maxCR=lvl>=8?1:lvl>=4?0.5:0.25;allowFly=lvl>=8;}
+  return (DATA.beasts||[]).filter(b=>b.cr<=maxCR&&(allowFly||!b.speed.fly));
+}
+// Temp HP granted by transforming (base Wild Shape = druid level; Circle of the Moon = 3x)
+function wildShapeTempHP(c){
+  return c.class==="druid"&&c.subclass==="moon"&&c.level>=3?c.level*3:c.level;
+}
+
 // ======================================================================
 // DATA HELPERS
 // ======================================================================
@@ -69,6 +108,26 @@ function getFeat(key){return DATA.feats.find(f=>f._key===key)}
 function getWeapon(key){return DATA.weapons.find(w=>w._key===key)}
 function getArmor(key){return DATA.armor.find(a=>a._key===key)}
 function getSpellByKey(key){return DATA.spells.find(s=>s._key===key)}
+function getManeuver(key){return (DATA.maneuvers||[]).find(m=>m._key===key)}
+function getBeast(key){return (DATA.beasts||[]).find(b=>b._key===key)}
+
+// Parse the weapon mastery keyword out of a weapon's description (the last
+// ";"-separated segment, e.g. "Finesse, Light, Thrown; Nick" -> "Nick") and
+// look it up in DATA.weaponMasteries. Returns {key,name,desc} or null.
+function getWeaponMastery(wd){
+  if(!wd||!wd.description)return null;
+  const parts=wd.description.split(";");
+  const last=parts[parts.length-1].trim().toLowerCase();
+  const m=(DATA.weaponMasteries||{})[last];
+  return m?{key:last,name:m.name,desc:m.desc}:null;
+}
+// Small HTML block explaining a weapon's mastery property, or "" if none.
+function masteryHtml(wd){
+  const m=getWeaponMastery(wd);if(!m)return"";
+  return `<div style="font-size:11px;margin-top:4px;padding:6px 8px;background:var(--bg3);border-left:2px solid var(--accent);border-radius:4px">
+    <span class="tag accent" style="margin-right:6px">Maestria: ${esc(m.name)}</span>${esc(m.desc)}
+  </div>`;
+}
 
 // Get all spells granted to character by race/subrace/feats (racial spells)
 function getRacialSpells(c){

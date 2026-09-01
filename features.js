@@ -5,7 +5,8 @@ function renderFeatures(c,cls,lvl,p){
   );
   classFeatsNonCombat.forEach(f=>{
     const hasChoices=f.choices&&f.choices.length;
-    const btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
+    let btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
+    if(f.n==="Fighting Style")btn=` <button class="btn sm" onclick="event.stopPropagation();pickFightingStyle()" style="font-size:10px">⚡ Escolher</button>`;
     h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(f.n)} <span class="lvtag">lv ${f.lvl} ▾</span>${btn}</div><div class="od">${esc(f.desc||"(no description)")}</div></div>`;
   });
   h+='</div>';
@@ -18,6 +19,34 @@ function renderFeatures(c,cls,lvl,p){
       });
       h+='</div>';
     }
+  }
+  // Battle Master: maneuver picker
+  if(c.subclass==="battle master"){
+    const known=maneuversKnownAtLevel(lvl);
+    const dieCount=superiorityDiceCount(lvl);
+    const dieSize=getScalingAt((getSubclass("battle master").features.find(f=>f.n==="Combat Superiority")||{}).scaling,lvl)||"d8";
+    const myManeuvers=c.maneuvers||[];
+    h+=`<div class="card"><div class="ct" style="color:var(--accent)">Manobras de Combate <button class="btn sm" onclick="searchManeuvers()">+ Escolher</button></div>
+      <div class="muted" style="font-size:11px;margin-bottom:8px">Conhecidas: ${myManeuvers.length} / ${known} · Dados de Superioridade: ${dieCount}${dieSize}</div>`;
+    if(!myManeuvers.length){h+='<div class="muted" style="font-size:12px">Nenhuma manobra escolhida ainda.</div>'}
+    else myManeuvers.forEach((mk,i)=>{
+      const m=getManeuver(mk);if(!m)return;
+      h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(m.name)}<span class="tog">▾</span> <button class="btn sm" onclick="event.stopPropagation();rmManeuver(${i})" style="padding:2px 8px">×</button></div><div class="od">${esc(m.desc)}</div></div>`;
+    });
+    h+='</div>';
+  }
+  // Druid: Wild Shape beast forms
+  if(c.class==="druid"&&lvl>=2){
+    const eligible=wildShapeEligibleBeasts(c);
+    h+=`<div class="card"><div class="ct" style="color:var(--accent)">Formas Selvagens Disponíveis</div>
+      <div class="muted" style="font-size:11px;margin-bottom:8px">Toque em uma forma para ver a ficha completa e se transformar.</div>`;
+    if(!eligible.length){h+='<div class="muted" style="font-size:12px">Nenhuma forma disponível neste nível.</div>'}
+    else eligible.forEach(b=>{
+      h+=`<div class="opt" onclick="showBeastSheet('${b._key}')">
+        <div class="on">${esc(b.name)} <span class="lvtag">CR ${b.crLabel} · PV ${b.hp} · CA ${b.ac}</span></div>
+      </div>`;
+    });
+    h+='</div>';
   }
   // Race: only overview
   const race=getRace(c.race);
@@ -48,8 +77,9 @@ function renderFeatures(c,cls,lvl,p){
     const isTough=/^tough\b/i.test(fname);
     const choiceInfo=CHOICE_FEATS.find(cf=>cf.match.test(fname));
     let badge="";
-    if(isTough)badge=` <span class="tag ok">+${2*lvl} HP applied</span>`;
-    else if(choiceInfo)badge=` <span class="tag magic">⚠ Action needed</span>`;
+    if(fd&&fd.epic)badge+=' <span class="tag warn">⭐ Dádiva Épica</span>';
+    if(isTough)badge+=` <span class="tag ok">+${2*lvl} HP applied</span>`;
+    else if(choiceInfo)badge+=` <span class="tag magic">⚠ Action needed</span>`;
     const isFromBg=bgFeat&&fname===bgFeat;
     const rmIdx=(c.feats||[]).indexOf(fname);
     const rmBtn=(!isFromBg&&rmIdx>=0)?` <button class="btn sm" onclick="event.stopPropagation();rmFeat(${rmIdx})" style="padding:2px 8px">×</button>`:"";

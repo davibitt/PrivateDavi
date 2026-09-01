@@ -185,6 +185,8 @@ function openNormalItemDetail(id){
   const isEq=(it.cat==="armor"&&c.armor===it.key)||(it.cat==="shield"&&c.inv_shield===it.id);
   const body=`
     <div style="font-size:11px;color:var(--accent2);margin-bottom:8px">${esc(info)}</div>
+    ${weap&&weap.description?`<div style="font-size:12px;margin-bottom:4px">${esc(weap.description)}</div>`:""}
+    ${weap?masteryHtml(weap):""}
     ${it.note?`<div style="font-size:12px;margin-bottom:8px;color:var(--text2)">${esc(it.note)}</div>`:""}
     <div style="font-size:12px">Quantidade: <strong>${it.qty||1}</strong></div>
     ${isEq?'<div style="margin-top:8px"><span class="tag ok">Equipado</span></div>':""}`;

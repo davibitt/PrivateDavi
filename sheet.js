@@ -427,6 +427,16 @@ function getScalingAt(scaling,lvl){
 
 function renderCombat(c,cls,lvl,p){
   let h="";
+  // Wild Shape: current active form banner
+  if(c.class==="druid"&&c.wildshape_form){
+    const b=getBeast(c.wildshape_form);
+    if(b){
+      h+=`<div class="notice ok" style="margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <span>🐾 Forma atual: <strong>${esc(b.name)}</strong></span>
+        <span><button class="btn sm" onclick="showBeastSheet('${b._key}')">Ver Ficha</button> <button class="btn sm" onclick="revertWildshape()">Reverter</button></span>
+      </div>`;
+    }
+  }
   // Actions pips + standard actions accordion
   h+='<div class="card"><div class="ct">Turn Actions <button class="btn sm" onclick="resetTurn()">↺ New Turn</button></div>';
   // Action
@@ -471,6 +481,7 @@ function renderCombat(c,cls,lvl,p){
           <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
         </div>
         ${wd.description?`<div class="muted" style="font-size:11px;margin-top:4px">${esc(wd.description)}</div>`:""}
+        ${masteryHtml(wd)}
         ${w.note?`<div style="font-size:11px;margin-top:4px;color:var(--accent2);white-space:pre-wrap">${esc(w.note)}</div>`:""}
         </div>`;
     });
@@ -496,6 +507,7 @@ function renderCombat(c,cls,lvl,p){
         <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
       </div>
       <div class="muted" style="font-size:11px;margin-top:4px">${esc(def.desc.slice(0,100))}${def.desc.length>100?"…":""}</div>
+      ${masteryHtml(wd)}
       </div>`;
   });
   h+='</div>';
@@ -603,7 +615,7 @@ function selectSub(k){
 
 function addWeapon(){
   const ws=DATA.weapons.filter(w=>w.damage);
-  const rows=ws.map(w=>`<div class="opt" onclick="pickWpn('${w._key}')"><div class="on">${esc(w.name)} <span class="lvtag">${w.damage} ${esc(w.damageType||"")}</span></div><div class="od" style="display:block">${esc(w.description||"")}${w.range?" · "+esc(w.range):""}</div></div>`).join("");
+  const rows=ws.map(w=>`<div class="opt" onclick="pickWpn('${w._key}')"><div class="on">${esc(w.name)} <span class="lvtag">${w.damage} ${esc(w.damageType||"")}</span></div><div class="od" style="display:block">${esc(w.description||"")}${w.range?" · "+esc(w.range):""}${masteryHtml(w)}</div></div>`).join("");
   openModal("Add Weapon",rows);
 }
 function pickWpn(k){
@@ -623,6 +635,7 @@ function openWeaponDetails(i){
   const bonus=w.mag||0;
   let body=`<div class="muted" style="font-size:12px;margin-bottom:8px">${wd?esc(wd.damage+" "+(wd.damageType||"")):""}${wd&&wd.range?" · "+esc(wd.range):""}</div>`;
   if(wd&&wd.description)body+=`<div style="font-size:12px;margin-bottom:8px">${esc(wd.description)}</div>`;
+  if(wd)body+=masteryHtml(wd);
   if(bonus)body+=`<div class="tag accent" style="margin-bottom:8px">Magical +${bonus}</div>`;
   if(w.note)body+=`<div style="font-size:13px;white-space:pre-wrap;line-height:1.5;margin-top:6px;padding:8px;background:var(--bg2);border-radius:var(--r)">${esc(w.note)}</div>`;
   openModal(name,body,
@@ -675,6 +688,13 @@ function renderSpells(c,cls,lvl,p){
         <div class="stat"><div class="sv">${fmtMod(atk)}</div><div class="sl">Attack</div></div>
         <div class="stat"><div class="sv">${ABIL_SHORT[ab]}</div><div class="sl">Ability</div></div>
       </div></div>`;
+    // Prepared spells (2024 PHB fixed-per-level table; cantrips don't count)
+    const preparedMax=getPreparedMax(c);
+    if(preparedMax!=null){
+      const preparedCount=(c.spells||[]).filter(s=>s.level>0).length;
+      const over=preparedCount>preparedMax;
+      h+=`<div class="acr" ${over?'style="border-color:var(--danger2)"':""}><div class="an">Magias Preparadas</div><div style="font-size:14px;font-weight:600;${over?"color:var(--danger2)":""}">${preparedCount} / ${preparedMax}</div></div>`;
+    }
     // Slots
     let slots=[];
     if(caster==="full")slots=FULL_CASTER_SLOTS[lvl-1]||[];
@@ -846,6 +866,19 @@ function addSpell(key){
   });
   saveChars();filterSpellSearch();renderSheet();  // refresh modal list + sheet
 }
+function pickFightingStyle(){
+  const c=chars[currentId];
+  const existing=new Set(getCharFeats(c).map(f=>f.toLowerCase()));
+  const styles=DATA.feats.filter(f=>f.styleGroup==="fighting"&&(!f.classOnly||f.classOnly===c.class));
+  let rows=styles.map(f=>{
+    const added=existing.has(f.name.toLowerCase());
+    return `<div class="opt" ${added?"":`onclick="addFeatToChar('${esc(f._key)}');closeModal();"`} style="${added?'opacity:.5':''}">
+      <div class="on">${esc(f.name.replace(/^Fighting Style: /,""))} ${added?'<span class="tag ok">✓</span>':''}</div>
+      <div class="od" style="display:block">${esc(f.description)}</div>
+    </div>`;
+  }).join("");
+  openModal("Escolher Estilo de Luta",rows,'<button class="btn" onclick="closeModal()">Fechar</button>');
+}
 function searchFeats(){
   let body=`<div class="f"><input type="text" id="ftq" placeholder="Search feats..." oninput="filterFeatSearch()"></div>
     <div id="ftlist" style="max-height:60vh;overflow-y:auto"></div>`;
@@ -864,7 +897,7 @@ function filterFeatSearch(){
       const added=existing.has(f.name.toLowerCase());
       h+=`<div class="spl" ${added?"":`onclick="addFeatToChar('${esc(f._key)}')"`} style="${added?'opacity:.5':''}">
         <div class="sph"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;flex:1">
-          <span class="spn">${esc(f.name)}</span>
+          <span class="spn">${esc(f.name)}</span>${f.epic?'<span class="tag warn">⭐ Épica</span>':''}
         </div>${added?'<span class="tag ok">✓</span>':'<span class="tag accent">+</span>'}</div>
         <div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4">${esc(f.description||"")}</div>
       </div>`;
@@ -877,7 +910,93 @@ function addFeatToChar(key){
   const c=chars[currentId];c.feats=c.feats||[];
   if(c.feats.indexOf(f.name)>=0)return;
   c.feats.push(f.name);
-  saveChars();filterFeatSearch();renderSheet();
+  saveChars();if(el("ftq"))filterFeatSearch();renderSheet();
+}
+function beastStatblockHtml(b){
+  const spd=[];
+  if(b.speed.walk)spd.push(b.speed.walk+" ft.");
+  if(b.speed.fly)spd.push("voo "+b.speed.fly+" ft.");
+  if(b.speed.swim)spd.push("natação "+b.speed.swim+" ft.");
+  if(b.speed.climb)spd.push("escalada "+b.speed.climb+" ft.");
+  const abilCell=(label,score)=>`<div class="stat"><div class="sv">${score} (${fmtMod(mod(score))})</div><div class="sl">${label}</div></div>`;
+  let h=`<div class="muted" style="font-size:11px;margin-bottom:8px">CR ${esc(b.crLabel)} (${b.xp} XP) · CA ${b.ac} · PV ${b.hp} (${esc(b.hitDice)}) · Desloc. ${esc(spd.join(", "))}</div>
+    <div class="row" style="flex-wrap:wrap;margin-bottom:8px">
+      ${abilCell("FOR",b.abil.str)}${abilCell("DES",b.abil.dex)}${abilCell("CON",b.abil.con)}${abilCell("INT",b.abil.int)}${abilCell("SAB",b.abil.wis)}${abilCell("CAR",b.abil.cha)}
+    </div>
+    <div style="font-size:12px;line-height:1.6">
+      ${b.skills?`<div><strong>Perícias:</strong> ${esc(b.skills)}</div>`:""}
+      ${b.resistances?`<div><strong>Resistências:</strong> ${esc(b.resistances)}</div>`:""}
+      <div><strong>Sentidos:</strong> ${esc(b.senses)}</div>
+      <div><strong>Idiomas:</strong> ${esc(b.languages)}</div>
+    </div>`;
+  if(b.traits&&b.traits.length){
+    h+='<div style="margin-top:10px"><div class="lbl">Traços</div>';
+    b.traits.forEach(t=>h+=`<div style="font-size:12px;margin-top:4px"><strong>${esc(t.n)}.</strong> ${esc(t.desc)}</div>`);
+    h+='</div>';
+  }
+  h+='<div style="margin-top:10px"><div class="lbl">Ações</div>';
+  b.actions.forEach(a=>h+=`<div style="font-size:12px;margin-top:4px"><strong>${esc(a.n)}.</strong> ${esc(a.desc)}</div>`);
+  h+='</div>';
+  if(b.bonusActions&&b.bonusActions.length){
+    h+='<div style="margin-top:10px"><div class="lbl">Ações Bônus</div>';
+    b.bonusActions.forEach(a=>h+=`<div style="font-size:12px;margin-top:4px"><strong>${esc(a.n)}.</strong> ${esc(a.desc)}</div>`);
+    h+='</div>';
+  }
+  return h;
+}
+function showBeastSheet(key){
+  const b=getBeast(key);if(!b)return;
+  const c=chars[currentId];
+  const tempHp=wildShapeTempHP(c);
+  const isCurrent=c.wildshape_form===key;
+  const footer=`<button class="btn" onclick="closeModal()">Fechar</button>
+    ${isCurrent?`<button class="btn danger" onclick="revertWildshape()">Reverter Forma</button>`:`<button class="btn primary" onclick="transformInto('${esc(key)}')">🐾 Transformar (+${tempHp} PV temp)</button>`}`;
+  openModal(b.name,beastStatblockHtml(b),footer);
+}
+function transformInto(key){
+  const c=chars[currentId];const b=getBeast(key);if(!b)return;
+  c.hp_tmp=Math.max(c.hp_tmp||0,wildShapeTempHP(c));
+  c.wildshape_form=key;
+  saveChars();closeModal();renderSheet();
+}
+function revertWildshape(){
+  const c=chars[currentId];
+  if(c.wildshape_form)c.hp_tmp=0;
+  c.wildshape_form=null;
+  saveChars();closeModal();renderSheet();
+}
+function searchManeuvers(){
+  const c=chars[currentId];const known=maneuversKnownAtLevel(c.level);
+  let body=`<div class="f"><input type="text" id="mnq" placeholder="Buscar manobra..." oninput="filterManeuverSearch()"></div>
+    <div class="muted" style="font-size:11px;margin:6px 0">Conhecidas: ${(c.maneuvers||[]).length} / ${known}</div>
+    <div id="mnlist" style="max-height:60vh;overflow-y:auto"></div>`;
+  openModal("Escolher Manobra",body);
+  filterManeuverSearch();
+}
+function filterManeuverSearch(){
+  const q=(el("mnq").value||"").toLowerCase();
+  const c=chars[currentId];const mine=new Set(c.maneuvers||[]);
+  const results=(DATA.maneuvers||[]).filter(m=>!q||m.name.toLowerCase().indexOf(q)>=0)
+    .sort((a,b)=>a.name.localeCompare(b.name));
+  let h="";
+  results.forEach(m=>{
+    const added=mine.has(m._key);
+    h+=`<div class="spl" ${added?"":`onclick="addManeuverToChar('${esc(m._key)}')"`} style="${added?'opacity:.5':''}">
+      <div class="sph"><div style="flex:1"><span class="spn">${esc(m.name)}</span></div>${added?'<span class="tag ok">✓</span>':'<span class="tag accent">+</span>'}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4">${esc(m.desc)}</div>
+    </div>`;
+  });
+  el("mnlist").innerHTML=h||'<div class="muted" style="padding:8px">Nenhuma manobra encontrada.</div>';
+}
+function addManeuverToChar(key){
+  const c=chars[currentId];c.maneuvers=c.maneuvers||[];
+  if(c.maneuvers.indexOf(key)>=0)return;
+  c.maneuvers.push(key);
+  saveChars();if(el("mnq"))filterManeuverSearch();renderSheet();
+}
+function rmManeuver(idx){
+  const c=chars[currentId];if(!c.maneuvers||!c.maneuvers[idx])return;
+  c.maneuvers.splice(idx,1);saveChars();renderSheet();
 }
 function rmFeat(idx){
   const c=chars[currentId];if(!c.feats||!c.feats[idx])return;
