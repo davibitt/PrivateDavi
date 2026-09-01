@@ -34,6 +34,9 @@ function _renderSheetInner(c){
   }
   ac+=(c.armor_mag||0);
   if(c.shield)ac+=2+(c.shield_mag||0);
+  // Fighting Style: Defense — +1 AC while wearing Light/Medium/Heavy armor
+  const fightingStyles=getFightingStyles(c);
+  if(fightingStyles.has("defense")&&(arm.type==="light"||arm.type==="medium"||arm.type==="heavy"))ac+=1;
   // Magic items equipados (baseado em equipped_slots)
   const equippedSlots=c.equipped_slots||{};
   const mis=c.magic_items||[];
@@ -134,6 +137,28 @@ function getCharFeats(c){
 // Check if the character has the Tough feat (auto from any source)
 function hasToughFeat(c){
   return getCharFeats(c).some(f=>/^tough\b/i.test(f));
+}
+// Returns a Set of fighting style short-keys the character has picked (e.g. "defense","archery","dueling")
+function getFightingStyles(c){
+  const set=new Set();
+  getCharFeats(c).forEach(f=>{
+    const m=/^fighting style:\s*(.+)$/i.exec(f.trim());
+    if(m)set.add(m[1].toLowerCase().trim());
+  });
+  return set;
+}
+// Numeric attack/damage bonuses from Fighting Styles that apply cleanly to a given weapon
+function fightingStyleWeaponBonus(styles,wd){
+  let atk=0,dmg=0;const tags=[];
+  const desc=(wd.description||"").toLowerCase();
+  const isRanged=wd.list==="ranged";
+  const isMelee=wd.list==="melee"&&wd.type!=="Natural";
+  const isTwoHanded=desc.indexOf("two-handed")>=0;
+  const isThrown=desc.indexOf("thrown")>=0;
+  if(styles.has("archery")&&isRanged){atk+=2;tags.push("Archery +2 acerto");}
+  if(styles.has("dueling")&&isMelee&&!isTwoHanded){dmg+=2;tags.push("Dueling +2 dano");}
+  if(styles.has("thrown weapon fighting")&&isThrown){dmg+=2;tags.push("Arremesso +2 dano");}
+  return{atk,dmg,tags};
 }
 // Effective max HP including Tough bonus (+2 per level)
 function effectiveMaxHP(c){
@@ -427,6 +452,7 @@ function getScalingAt(scaling,lvl){
 
 function renderCombat(c,cls,lvl,p){
   let h="";
+  const fightingStyles=getFightingStyles(c);
   // Wild Shape: current active form banner
   if(c.class==="druid"&&c.wildshape_form){
     const b=getBeast(c.wildshape_form);
@@ -470,8 +496,9 @@ function renderCombat(c,cls,lvl,p){
       const ab=wd.ability==="Dex"?"dex":"str";
       const isFin=(wd.description||"").toLowerCase().indexOf("finesse")>=0;
       const useAbil=isFin?(mod(c.attrs.str)>=mod(c.attrs.dex)?"str":"dex"):ab;
-      const atkMod=mod(c.attrs[useAbil])+p+(w.mag||0);
-      const dmgBonus=mod(c.attrs[useAbil])+(w.mag||0);
+      const fs=fightingStyleWeaponBonus(fightingStyles,wd);
+      const atkMod=mod(c.attrs[useAbil])+p+(w.mag||0)+fs.atk;
+      const dmgBonus=mod(c.attrs[useAbil])+(w.mag||0)+fs.dmg;
       const dmg=wd.damage+(dmgBonus>=0?"+"+dmgBonus:dmgBonus);
       h+=`<div class="wpr"><div class="wpn">${esc(w.custom_name||wd.name)}${w.mag?` <span class="tag accent">+${w.mag}</span>`:""}
         <button class="btn sm" onclick="editWeapon(${i})" style="font-size:10px">✎</button></div>
@@ -480,6 +507,7 @@ function renderCombat(c,cls,lvl,p){
           <div><div class="v">${dmg}</div><div class="l">${esc(wd.damageType||"")}</div></div>
           <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
         </div>
+        ${fs.tags.length?`<div style="margin-top:4px">${fs.tags.map(t=>`<span class="tag ok" style="font-size:9px">${esc(t)}</span>`).join(" ")}</div>`:""}
         ${wd.description?`<div class="muted" style="font-size:11px;margin-top:4px">${esc(wd.description)}</div>`:""}
         ${masteryHtml(wd)}
         ${w.note?`<div style="font-size:11px;margin-top:4px;color:var(--accent2);white-space:pre-wrap">${esc(w.note)}</div>`:""}
@@ -495,8 +523,9 @@ function renderCombat(c,cls,lvl,p){
     const ab=wd.ability==="Dex"?"dex":"str";
     const isFin=(wd.description||"").toLowerCase().indexOf("finesse")>=0;
     const useAbil=isFin?(mod(c.attrs.str)>=mod(c.attrs.dex)?"str":"dex"):ab;
-    const atkMod=mod(c.attrs[useAbil])+p+bonus;
-    const dmgBonus=mod(c.attrs[useAbil])+bonus;
+    const fs=fightingStyleWeaponBonus(fightingStyles,wd);
+    const atkMod=mod(c.attrs[useAbil])+p+bonus+fs.atk;
+    const dmgBonus=mod(c.attrs[useAbil])+bonus+fs.dmg;
     const dmg=wd.damage+(dmgBonus>=0?"+"+dmgBonus:dmgBonus);
     const miIdx=(c.magic_items||[]).indexOf(mi);
     h+=`<div class="wpr"><div class="wpn">${esc(def.name)}${bonus?` <span class="tag accent">+${bonus}</span>`:""} <span class="tag magic" style="font-size:10px">✦</span>
@@ -506,6 +535,7 @@ function renderCombat(c,cls,lvl,p){
         <div><div class="v">${dmg}</div><div class="l">${esc(wd.damageType||"")}</div></div>
         <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
       </div>
+      ${fs.tags.length?`<div style="margin-top:4px">${fs.tags.map(t=>`<span class="tag ok" style="font-size:9px">${esc(t)}</span>`).join(" ")}</div>`:""}
       <div class="muted" style="font-size:11px;margin-top:4px">${esc(def.desc.slice(0,100))}${def.desc.length>100?"…":""}</div>
       ${masteryHtml(wd)}
       </div>`;
