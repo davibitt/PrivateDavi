@@ -3,20 +3,51 @@ const SELECT_RESIST_KEYS=new Set(["armor-of-resistance","ring-resistance"]);
 const FIXED_MAGIC_DMGRES={"frost-brand":["Fogo"]};
 const DAMAGE_TYPES=["Ácido","Concussivo","Cortante","Elétrico","Fogo","Frio","Força","Necrótico","Perfurante","Psíquico","Radiante","Trovejante","Veneno"];
 
+// One-time cleanup: weapons used to be tracked in c.inv (Inventário) separately from
+// c.weapons (Combate), which caused adds/removals in one tab to be invisible in the
+// other. Any leftover c.inv weapon entries get folded into c.weapons here.
+function migrateInvWeaponsToWeapons(c){
+  const inv=c.inv||[];
+  const leftover=inv.filter(x=>x.cat==="weapon");
+  if(!leftover.length)return;
+  c.weapons=c.weapons||[];
+  leftover.forEach(it=>{
+    const n=Math.max(1,it.qty||1);
+    for(let k=0;k<n;k++){
+      c.weapons.push({key:it.key,name:it.name,mag:0,note:it.note||"",custom_name:null});
+    }
+  });
+  c.inv=inv.filter(x=>x.cat!=="weapon");
+  saveChars();
+}
+
 function renderInventory(c,cls,lvl,p){
+  migrateInvWeaponsToWeapons(c);
   const inv=c.inv||[];
   const eqSlots=c.equipped_slots||{};
   let h="";
 
   // === Itens Normais ===
   h+=`<div class="card"><div class="ct">Itens Normais <button class="btn sm" onclick="addNormalItem()">+ Adicionar</button></div>`;
-  if(!inv.length){
+  const weapons=c.weapons||[];
+  if(!inv.length&&!weapons.length){
     h+='<div class="muted" style="font-size:12px">Nenhum item no inventário. Toque em "+ Adicionar" para buscar armas, armaduras e escudos.</div>';
   } else {
-    const groups={weapon:[],armor:[],shield:[]};
+    if(weapons.length){
+      h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Armas <span style="text-transform:none;letter-spacing:normal">(gerencie na aba Combate)</span></div>`;
+      weapons.slice().map((w,i)=>({w,i})).sort((a,b)=>(a.w.custom_name||a.w.name||"").localeCompare(b.w.custom_name||b.w.name||"")).forEach(({w,i})=>{
+        h+=`<div class="opt" onclick="openWeaponDetails(${i})">
+          <div class="on" style="display:flex;align-items:center;gap:6px">
+            <span style="flex:1">${esc(w.custom_name||w.name)}${w.mag?` <span class="tag accent">+${w.mag}</span>`:""}</span>
+            <span class="lvtag">▸</span>
+          </div>
+        </div>`;
+      });
+    }
+    const groups={armor:[],shield:[]};
     inv.forEach(it=>{if(groups[it.cat])groups[it.cat].push(it);});
-    const catLabels={weapon:"Armas",armor:"Armaduras",shield:"Escudos"};
-    ["weapon","armor","shield"].forEach(cat=>{
+    const catLabels={armor:"Armaduras",shield:"Escudos"};
+    ["armor","shield"].forEach(cat=>{
       if(!groups[cat].length)return;
       groups[cat].sort((a,b)=>(a.name||"").localeCompare(b.name||""));
       h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">${catLabels[cat]}</div>`;
@@ -75,13 +106,8 @@ function renderInventory(c,cls,lvl,p){
 
   // === Ver Inventário ===
   h+='<div class="card"><div class="ct">Ver Inventário</div>';
-  const weapItems=(c.inv||[]).filter(x=>x.cat==="weapon").sort((a,b)=>a.name.localeCompare(b.name));
   const equipItems=(c.inv||[]).filter(x=>x.cat==="armor"||x.cat==="shield").sort((a,b)=>a.name.localeCompare(b.name));
   const otherItems=c.items||[];
-
-  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Armas</div>`;
-  if(!weapItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhuma arma no inventário.</div>';}
-  else weapItems.forEach(it=>{h+=`<div class="opt"><div class="on">${esc(it.name)}${it.qty>1?` ×${it.qty}`:""}</div></div>`;});
 
   h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Equipamentos</div>`;
   if(!equipItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum equipamento no inventário.</div>';}
@@ -136,7 +162,8 @@ function addNormalItem(){
       if(!groups[cat].length)return;
       rows+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">${catLabels[cat]}</div>`;
       groups[cat].forEach(d=>{
-        rows+=`<div class="opt" onclick="pickNormalItem('${d.key}','${d.cat}')">
+        const action=d.cat==="weapon"?`pickWpn('${d.key}')`:`pickNormalItem('${d.key}','${d.cat}')`;
+        rows+=`<div class="opt" onclick="${action}">
           <div class="on">${esc(d.name)} <span class="muted" style="font-size:11px">${esc(d.info)}</span></div>
         </div>`;
       });
@@ -153,9 +180,8 @@ function addNormalItem(){
 
 function pickNormalItem(key,cat){
   const arm=cat==="armor"?getArmor(key):null;
-  const weap=cat==="weapon"?getWeapon(key):null;
-  const name=arm?arm.name:weap?weap.name.replace(/\s*\[.*?\]$/,"").trim():"Escudo";
-  const info=arm?`${arm.type}, CA ${arm.ac}`:weap?`${weap.type||""}, ${weap.damage||""} ${weap.damageType||""}`.trim():"+2 CA";
+  const name=arm?arm.name:"Escudo";
+  const info=arm?`${arm.type}, CA ${arm.ac}`:"+2 CA";
   const body=`
     <div style="font-size:14px;font-weight:600;margin-bottom:4px">${esc(name)}</div>
     <div style="font-size:11px;color:var(--accent2);margin-bottom:10px">${esc(info)}</div>
@@ -169,8 +195,7 @@ function pickNormalItem(key,cat){
 function confirmAddNormalItem(key,cat){
   const c=chars[currentId];c.inv=c.inv||[];
   const arm=cat==="armor"?getArmor(key):null;
-  const weap=cat==="weapon"?getWeapon(key):null;
-  const name=arm?arm.name:weap?weap.name.replace(/\s*\[.*?\]$/,"").trim():"Escudo";
+  const name=arm?arm.name:"Escudo";
   const qty=parseInt((document.getElementById("ni-qty")||{}).value)||1;
   const note=((document.getElementById("ni-note")||{}).value||"").trim();
   c.inv.push({id:"ni"+Date.now(),key,cat,name,qty,note,ts:Date.now()});
@@ -180,13 +205,10 @@ function confirmAddNormalItem(key,cat){
 function openNormalItemDetail(id){
   const c=chars[currentId];const it=(c.inv||[]).find(x=>x.id===id);if(!it)return;
   const arm=it.cat==="armor"?getArmor(it.key):null;
-  const weap=it.cat==="weapon"?getWeapon(it.key):null;
-  const info=arm?`${arm.type}, CA ${arm.ac}`:weap?`${weap.type||""}, ${weap.damage||""} ${weap.damageType||""}`.trim():"+2 CA";
+  const info=arm?`${arm.type}, CA ${arm.ac}`:"+2 CA";
   const isEq=(it.cat==="armor"&&c.armor===it.key)||(it.cat==="shield"&&c.inv_shield===it.id);
   const body=`
     <div style="font-size:11px;color:var(--accent2);margin-bottom:8px">${esc(info)}</div>
-    ${weap&&weap.description?`<div style="font-size:12px;margin-bottom:4px">${esc(weap.description)}</div>`:""}
-    ${weap?masteryHtml(weap):""}
     ${it.note?`<div style="font-size:12px;margin-bottom:8px;color:var(--text2)">${esc(it.note)}</div>`:""}
     <div style="font-size:12px">Quantidade: <strong>${it.qty||1}</strong></div>
     ${isEq?'<div style="margin-top:8px"><span class="tag ok">Equipado</span></div>':""}`;
