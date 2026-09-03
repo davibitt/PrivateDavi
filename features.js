@@ -24,7 +24,7 @@ function renderFeatures(c,cls,lvl,p){
   if(c.subclass==="battle master"){
     const known=maneuversKnownAtLevel(lvl);
     const dieCount=superiorityDiceCount(lvl);
-    const dieSize=getScalingAt((getSubclass("battle master").features.find(f=>f.n==="Combat Superiority")||{}).scaling,lvl)||"d8";
+    const dieSize=getScalingAt((getSubclass("battle master").features.find(f=>f.n==="Superioridade em Combate")||{}).scaling,lvl)||"d8";
     const myManeuvers=c.maneuvers||[];
     h+=`<div class="card"><div class="ct" style="color:var(--accent)">Manobras de Combate <button class="btn sm" onclick="searchManeuvers()">+ Escolher</button></div>
       <div class="muted" style="font-size:11px;margin-bottom:8px">Conhecidas: ${myManeuvers.length} / ${known} · Dados de Superioridade: ${dieCount}${dieSize}</div>`;
