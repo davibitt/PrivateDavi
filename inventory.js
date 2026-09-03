@@ -113,13 +113,13 @@ function renderInventory(c,cls,lvl,p){
   if(!equipItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum equipamento no inventário.</div>';}
   else equipItems.forEach(it=>{h+=`<div class="opt"><div class="on">${esc(it.name)}${it.qty>1?` ×${it.qty}`:""}</div></div>`;});
 
-  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Poções e Outros <button class="btn sm" onclick="newItem()" style="margin-left:6px">+ Add</button></div>`;
-  if(!otherItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum item. Toque em "+ Add".</div>';}
+  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Poções e Outros <button class="btn sm" onclick="newItem()" style="margin-left:6px">+ Adicionar</button></div>`;
+  if(!otherItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum item. Toque em "+ Adicionar".</div>';}
   else{
     otherItems.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(it=>{
       const preview=(it.body||"").slice(0,60).replace(/\n/g," ");
       h+=`<div class="opt" onclick="openItem('${esc(it.id)}')">
-        <div class="on">${esc(it.title||"(no title)")}${it.qty&&it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""} <span class="lvtag">▸</span></div>
+        <div class="on">${esc(it.title||"(sem título)")}${it.qty&&it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""} <span class="lvtag">▸</span></div>
         ${preview?`<div class="od" style="display:block;font-size:11px">${esc(preview)}${it.body&&it.body.length>60?"…":""}</div>`:""}
       </div>`;
     });
@@ -127,10 +127,11 @@ function renderInventory(c,cls,lvl,p){
   h+='</div>';
 
   // Currency
-  h+='<div class="card"><div class="ct">Currency</div><div class="row">';
+  h+='<div class="card"><div class="ct">Moedas</div><div class="row">';
   const coins=c.coins||{cp:0,sp:0,gp:0,pp:0};
+  const coinLabels={cp:"PC",sp:"PP",gp:"PO",pp:"PL"};
   ["cp","sp","gp","pp"].forEach(k=>{
-    h+=`<div class="f" style="flex:1"><div class="lbl">${k.toUpperCase()}</div><input type="number" id="coin-${k}" value="${coins[k]||0}" onchange="saveCoins()"></div>`;
+    h+=`<div class="f" style="flex:1"><div class="lbl">${coinLabels[k]}</div><input type="number" id="coin-${k}" value="${coins[k]||0}" onchange="saveCoins()"></div>`;
   });
   h+='</div></div>';
   el("tab4").innerHTML=h;
@@ -259,9 +260,9 @@ function openItem(id){
   const body=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">Quantidade: <strong>${it.qty||1}</strong></div>
     <div style="white-space:pre-wrap;font-size:13px;line-height:1.5">${esc(it.body||"(sem descrição)")}</div>`;
   openModal(it.title||"(sem título)",body,
-    `<button class="btn danger" onclick="deleteItem('${esc(id)}')">✕ Delete</button>
-     <button class="btn" onclick="editItem('${esc(id)}')">✎ Edit</button>
-     <button class="btn" onclick="closeModal()">Close</button>`);
+    `<button class="btn danger" onclick="deleteItem('${esc(id)}')">✕ Excluir</button>
+     <button class="btn" onclick="editItem('${esc(id)}')">✎ Editar</button>
+     <button class="btn" onclick="closeModal()">Fechar</button>`);
 }
 function editItem(id){
   const c=chars[currentId];const it=(c.items||[]).find(x=>x.id===id);
