@@ -1,13 +1,13 @@
 function renderFeatures(c,cls,lvl,p){
-  let h='<div class="card"><div class="ct">Class Features</div>';
+  let h='<div class="card"><div class="ct">Características de Classe</div>';
   const classFeatsNonCombat=(cls.features||[]).filter(f=>
     f.lvl<=lvl && !isCombatFeature(f) && !f.desc.includes("put it in the 'Class' field") && !f.desc.includes("coloque-a no campo 'Classe'")
   );
   classFeatsNonCombat.forEach(f=>{
     const hasChoices=f.choices&&f.choices.length;
-    let btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
+    let btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Ativar</button>`:"";
     if(f.n==="Estilo de Luta")btn=` <button class="btn sm" onclick="event.stopPropagation();pickFightingStyle()" style="font-size:10px">⚡ Escolher</button>`;
-    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(f.n)} <span class="lvtag">lv ${f.lvl} ▾</span>${btn}</div><div class="od">${esc(f.desc||"(no description)")}</div></div>`;
+    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(f.n)} <span class="lvtag">nv ${f.lvl} ▾</span>${btn}</div><div class="od">${esc(f.desc||"(sem descrição)")}</div></div>`;
   });
   h+='</div>';
   if(c.subclass){
@@ -15,7 +15,7 @@ function renderFeatures(c,cls,lvl,p){
     if(sc){
       h+=`<div class="card"><div class="ct" style="color:var(--accent)">${esc(sc.name)}</div>`;
       (sc.features||[]).filter(f=>f.lvl<=lvl && !isCombatFeature(f)).forEach(f=>{
-        h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--accent)">${esc(f.n)} <span class="lvtag">lv ${f.lvl} ▾</span></div><div class="od">${esc(f.desc||"")}</div></div>`;
+        h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--accent)">${esc(f.n)} <span class="lvtag">nv ${f.lvl} ▾</span></div><div class="od">${esc(f.desc||"")}</div></div>`;
       });
       h+='</div>';
     }
@@ -43,7 +43,7 @@ function renderFeatures(c,cls,lvl,p){
     if(!eligible.length){h+='<div class="muted" style="font-size:12px">Nenhuma forma disponível neste nível.</div>'}
     else eligible.forEach(b=>{
       h+=`<div class="opt" onclick="showBeastSheet('${b._key}')">
-        <div class="on">${esc(b.name)} <span class="lvtag">CR ${b.crLabel} · PV ${b.hp} · CA ${b.ac}</span></div>
+        <div class="on">${esc(b.name)} <span class="lvtag">ND ${b.crLabel} · PV ${b.hp} · CA ${b.ac}</span></div>
       </div>`;
     });
     h+='</div>';
@@ -52,7 +52,7 @@ function renderFeatures(c,cls,lvl,p){
   const race=getRace(c.race);
   if(race&&race.trait){
     h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(race.name)}</div>
-      <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Overview <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(race.trait)}</div></div>
+      <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Visão Geral <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(race.trait)}</div></div>
     </div>`;
   }
   // Subrace: only overview
@@ -60,7 +60,7 @@ function renderFeatures(c,cls,lvl,p){
     const sr=getSubrace(c.subrace);
     if(sr&&sr.trait){
       h+=`<div class="card"><div class="ct" style="color:var(--magic)">${esc(sr.name)}</div>
-        <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Overview <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(sr.trait)}</div></div>
+        <div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="color:var(--magic)">Visão Geral <span class="lvtag">▾</span></div><div class="od" style="white-space:pre-line">${esc(sr.trait)}</div></div>
       </div>`;
     }
   }
@@ -68,8 +68,8 @@ function renderFeatures(c,cls,lvl,p){
   // Feats from background and other sources
   const myFeats=getCharFeats(c); // array of _keys
   const bgFeatKey=(c.bg&&(DATA.backgrounds.find(b=>b._key===c.bg)||{}).feat)||"";
-  h+=`<div class="card"><div class="ct" style="color:var(--accent2)">Feats <button class="btn sm" onclick="searchFeats()">+ Add</button></div>`;
-  if(!myFeats.length){h+='<div class="muted" style="font-size:12px">No feats yet. Tap "+ Add" to choose one.</div>'}
+  h+=`<div class="card"><div class="ct" style="color:var(--accent2)">Talentos <button class="btn sm" onclick="searchFeats()">+ Adicionar</button></div>`;
+  if(!myFeats.length){h+='<div class="muted" style="font-size:12px">Nenhum talento ainda. Toque em "+ Adicionar" para escolher um.</div>'}
   myFeats.forEach(key=>{
     const fd=DATA.feats.find(f=>f._key===key);
     const displayName=fd?fd.name:key;
@@ -78,12 +78,12 @@ function renderFeatures(c,cls,lvl,p){
     const choiceInfo=CHOICE_FEATS.find(cf=>cf.match.test(key));
     let badge="";
     if(fd&&fd.epic)badge+=' <span class="tag warn">⭐ Dádiva Épica</span>';
-    if(isTough)badge+=` <span class="tag ok">+${2*lvl} HP applied</span>`;
-    else if(choiceInfo)badge+=` <span class="tag magic">⚠ Action needed</span>`;
+    if(isTough)badge+=` <span class="tag ok">+${2*lvl} PV aplicado</span>`;
+    else if(choiceInfo)badge+=` <span class="tag magic">⚠ Ação necessária</span>`;
     const isFromBg=bgFeatKey&&key===bgFeatKey;
     const rmIdx=(c.feats||[]).indexOf(key);
     const rmBtn=(!isFromBg&&rmIdx>=0)?` <button class="btn sm" onclick="event.stopPropagation();rmFeat(${rmIdx})" style="padding:2px 8px">×</button>`:"";
-    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(displayName)}${badge}${rmBtn}<span class="tog">▾</span></div><div class="od">${esc(desc)}${choiceInfo?`<div style="margin-top:8px;padding:6px;background:var(--bg2);border-left:2px solid var(--magic);font-size:12px"><strong>What to do:</strong> ${esc(choiceInfo.what)}. Track this manually in your Notes tab.</div>`:""}</div></div>`;
+    h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(displayName)}${badge}${rmBtn}<span class="tog">▾</span></div><div class="od">${esc(desc)}${choiceInfo?`<div style="margin-top:8px;padding:6px;background:var(--bg2);border-left:2px solid var(--magic);font-size:12px"><strong>O que fazer:</strong> ${esc(choiceInfo.what)}. Acompanhe isso manualmente na aba Notas.</div>`:""}</div></div>`;
   });
   h+='</div>';
 
@@ -95,14 +95,14 @@ function renderFeatures(c,cls,lvl,p){
   (cls.features||[]).filter(f=>f.lvl<=lvl).forEach(f=>(f.languages||[]).forEach(l=>langs.add(l)));
   if(!c.extra_langs)c.extra_langs=[];
   const autoLangs=[...langs];
-  h+=`<div class="card"><div class="ct">Languages</div>`;
+  h+=`<div class="card"><div class="ct">Idiomas</div>`;
   autoLangs.forEach(l=>{
     h+=`<div class="skr" style="cursor:default"><span class="skd">●</span><span style="flex:1">${esc(l)}</span></div>`;
   });
   c.extra_langs.forEach((l,i)=>{
     h+=`<div class="skr" style="cursor:default"><span class="skd">●</span><span style="flex:1">${esc(l)}</span><button class="btn sm" onclick="rmLang(${i})" style="padding:2px 8px">×</button></div>`;
   });
-  h+=`<button class="btn sm" onclick="addLang()" style="margin-top:8px;width:100%">+ Add Language</button>`;
+  h+=`<button class="btn sm" onclick="addLang()" style="margin-top:8px;width:100%">+ Adicionar Idioma</button>`;
   h+='</div>';
 
   el("tab1").innerHTML=h;
@@ -304,18 +304,18 @@ function renderNotes(c){
   const notes=c.notes_list||[];
   // Migrar formato antigo (c.notes string) se existir
   if(typeof c.notes==="string" && c.notes.trim() && !notes.length){
-    notes.push({id:"n"+Date.now(),title:"Note",body:c.notes,ts:Date.now()});
+    notes.push({id:"n"+Date.now(),title:"Nota",body:c.notes,ts:Date.now()});
     c.notes_list=notes;delete c.notes;saveChars();
   }
-  let h='<div class="card"><div class="ct">Notes <button class="btn sm" onclick="newNote()">+ New</button></div>';
+  let h='<div class="card"><div class="ct">Notas <button class="btn sm" onclick="newNote()">+ Nova</button></div>';
   if(!notes.length){
-    h+='<div class="muted" style="font-size:12px;padding:10px 0">No notes yet. Tap "+ New" to create one.</div>';
+    h+='<div class="muted" style="font-size:12px;padding:10px 0">Nenhuma nota ainda. Toque em "+ Nova" para criar uma.</div>';
   } else {
     // Sort by newest first
     notes.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(n=>{
       const preview=(n.body||"").slice(0,100).replace(/\n/g," ");
       h+=`<div class="opt" onclick="openNote('${esc(n.id)}')">
-        <div class="on">${esc(n.title||"(no title)")} <span class="lvtag">${fmtDate(n.ts)}</span></div>
+        <div class="on">${esc(n.title||"(sem título)")} <span class="lvtag">${fmtDate(n.ts)}</span></div>
         <div class="od" style="display:block;font-size:12px">${esc(preview)}${n.body.length>100?"…":""}</div>
       </div>`;
     });
@@ -329,14 +329,14 @@ function renderCharacter(c){
   const traits=c.char_traits||"";
   const story=c.char_story||"";
   let h=`<div class="card">
-    <div class="ct">Portrait</div>
+    <div class="ct">Retrato</div>
     <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
       <div style="width:220px;height:220px;border:1px solid var(--border);border-radius:var(--r);background:var(--bg2);display:flex;align-items:center;justify-content:center;overflow:hidden">
-        ${img?`<img src="${esc(img)}" style="width:100%;height:100%;object-fit:cover" alt="portrait">`:`<div class="muted" style="font-size:12px;text-align:center;padding:20px">No image</div>`}
+        ${img?`<img src="${esc(img)}" style="width:100%;height:100%;object-fit:cover" alt="retrato">`:`<div class="muted" style="font-size:12px;text-align:center;padding:20px">Sem imagem</div>`}
       </div>
       <div class="row" style="gap:6px">
-        <button class="btn sm" onclick="document.getElementById('portrait-input').click()">📷 ${img?"Change":"Upload"} image</button>
-        ${img?`<button class="btn sm danger" onclick="removePortrait()">✕ Remove</button>`:""}
+        <button class="btn sm" onclick="document.getElementById('portrait-input').click()">📷 ${img?"Trocar":"Enviar"} imagem</button>
+        ${img?`<button class="btn sm danger" onclick="removePortrait()">✕ Remover</button>`:""}
       </div>
       <input type="file" id="portrait-input" accept="image/*" style="display:none" onchange="uploadPortrait(event)">
     </div>
@@ -345,32 +345,32 @@ function renderCharacter(c){
   // Background
   const bg=getBackground(c.bg);
   if(bg){
-    h+=`<div class="card"><div class="ct">Background — ${esc(bg.name)}</div>`;
-    if(bg.skills)h+=`<div class="opt open"><div class="on">Skills</div><div class="od">${bg.skills.map(esc).join(", ")}</div></div>`;
-    if(bg.tools)h+=`<div class="opt open"><div class="on">Tools</div><div class="od">${bg.tools.map(esc).join(", ")}</div></div>`;
+    h+=`<div class="card"><div class="ct">Antecedente — ${esc(bg.name)}</div>`;
+    if(bg.skills)h+=`<div class="opt open"><div class="on">Perícias</div><div class="od">${bg.skills.map(esc).join(", ")}</div></div>`;
+    if(bg.tools)h+=`<div class="opt open"><div class="on">Ferramentas</div><div class="od">${bg.tools.map(esc).join(", ")}</div></div>`;
     if(bg.feat){
       const featData=DATA.feats.find(f=>f._key===bg.feat);
       const featName=featData?featData.name:bg.feat;
-      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Origin Feat: ${esc(featName)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
+      h+=`<div class="opt${featData?"":" open"}" ${featData?`onclick="this.classList.toggle('open')"`:""}><div class="on">Talento de Origem: ${esc(featName)}${featData?' <span class="lvtag">▾</span>':""}</div><div class="od">${featData?esc(featData.description):""}</div></div>`;
     }
-    if(bg.description)h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(bg.name)} Lore <span class="lvtag">▾</span></div><div class="od">${esc(bg.description)}</div></div>`;
+    if(bg.description)h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(bg.name)} — Descrição <span class="lvtag">▾</span></div><div class="od">${esc(bg.description)}</div></div>`;
     h+='</div>';
   }
 
   h+=`<div class="card">
-    <div class="ct">Traits</div>
-    <textarea id="char-traits" rows="6" style="min-height:120px;width:100%" placeholder="Personality, ideals, bonds, flaws, appearance..." onblur="saveCharText()">${esc(traits)}</textarea>
+    <div class="ct">Traços de Personalidade</div>
+    <textarea id="char-traits" rows="6" style="min-height:120px;width:100%" placeholder="Personalidade, ideais, vínculos, defeitos, aparência..." onblur="saveCharText()">${esc(traits)}</textarea>
   </div>
   <div class="card">
-    <div class="ct">Backstory</div>
-    <textarea id="char-story" rows="10" style="min-height:200px;width:100%" placeholder="Origin, past, motivations, key events..." onblur="saveCharText()">${esc(story)}</textarea>
+    <div class="ct">História de Fundo</div>
+    <textarea id="char-story" rows="10" style="min-height:200px;width:100%" placeholder="Origem, passado, motivações, eventos importantes..." onblur="saveCharText()">${esc(story)}</textarea>
   </div>`;
   el("tab7").innerHTML=h;
 }
 function uploadPortrait(ev){
   const file=ev.target.files&&ev.target.files[0];
   if(!file)return;
-  if(file.size>3*1024*1024){alert("Image too large (max 3 MB).");return}
+  if(file.size>3*1024*1024){alert("Imagem muito grande (máx. 3 MB).");return}
   const reader=new FileReader();
   reader.onload=function(e){
     const img=new Image();
@@ -388,7 +388,7 @@ function uploadPortrait(ev){
   reader.readAsDataURL(file);
 }
 function removePortrait(){
-  if(!confirm("Remove portrait?"))return;
+  if(!confirm("Remover retrato?"))return;
   const c=chars[currentId];delete c.portrait;saveChars();renderSheet();
 }
 function saveCharText(){
@@ -407,21 +407,21 @@ function openNote(id){
   if(!n)return;
   const body=`<div style="font-size:11px;color:var(--text3);margin-bottom:6px">${fmtDate(n.ts)}</div>
     <div style="white-space:pre-wrap;font-size:13px;line-height:1.5">${esc(n.body)}</div>`;
-  openModal(n.title||"(no title)",body,
-    `<button class="btn danger" onclick="deleteNote('${esc(id)}')">✕ Delete</button>
-     <button class="btn" onclick="editNote('${esc(id)}')">✎ Edit</button>
-     <button class="btn" onclick="closeModal()">Close</button>`);
+  openModal(n.title||"(sem título)",body,
+    `<button class="btn danger" onclick="deleteNote('${esc(id)}')">✕ Excluir</button>
+     <button class="btn" onclick="editNote('${esc(id)}')">✎ Editar</button>
+     <button class="btn" onclick="closeModal()">Fechar</button>`);
 }
 function editNote(id){
   const c=chars[currentId];const n=(c.notes_list||[]).find(x=>x.id===id);
   if(!n)return;openNoteEditor(n,false);
 }
 function openNoteEditor(n,isNew){
-  const body=`<div class="f"><div class="lbl">Title</div><input type="text" id="ntitle" value="${esc(n.title||"")}" placeholder="Note title"></div>
-    <div class="f"><div class="lbl">Content</div><textarea id="nbody" rows="10" style="min-height:200px" placeholder="Write your note...">${esc(n.body||"")}</textarea></div>`;
-  openModal(isNew?"New Note":"Edit Note",body,
-    `<button class="btn" onclick="closeModal()">Cancel</button>
-     <button class="btn primary" onclick="saveNoteEdit('${esc(n.id)}',${isNew?"true":"false"})">💾 Save</button>`);
+  const body=`<div class="f"><div class="lbl">Título</div><input type="text" id="ntitle" value="${esc(n.title||"")}" placeholder="Título da nota"></div>
+    <div class="f"><div class="lbl">Conteúdo</div><textarea id="nbody" rows="10" style="min-height:200px" placeholder="Escreva sua nota...">${esc(n.body||"")}</textarea></div>`;
+  openModal(isNew?"Nova Nota":"Editar Nota",body,
+    `<button class="btn" onclick="closeModal()">Cancelar</button>
+     <button class="btn primary" onclick="saveNoteEdit('${esc(n.id)}',${isNew?"true":"false"})">💾 Salvar</button>`);
   setTimeout(()=>{const t=el("ntitle");if(t)t.focus()},50);
 }
 function saveNoteEdit(id,isNew){
@@ -430,15 +430,15 @@ function saveNoteEdit(id,isNew){
   const body=el("nbody").value;
   if(!title && !body){closeModal();return}
   if(isNew){
-    c.notes_list.push({id,title:title||"(untitled)",body,ts:Date.now()});
+    c.notes_list.push({id,title:title||"(sem título)",body,ts:Date.now()});
   } else {
     const n=c.notes_list.find(x=>x.id===id);
-    if(n){n.title=title||"(untitled)";n.body=body;n.ts=Date.now()}
+    if(n){n.title=title||"(sem título)";n.body=body;n.ts=Date.now()}
   }
   saveChars();closeModal();renderSheet();
 }
 function deleteNote(id){
-  if(!confirm("Delete this note?"))return;
+  if(!confirm("Excluir esta nota?"))return;
   const c=chars[currentId];
   c.notes_list=(c.notes_list||[]).filter(x=>x.id!==id);
   saveChars();closeModal();renderSheet();
@@ -462,26 +462,26 @@ function showFeatureChoices(src,featName){
     const sc=getSubclass(c.subclass);
     feat=(sc.features||[]).find(t=>t.n===featName);
   }
-  if(!feat||!feat.choices){alert("No choices to show.");return}
-  let body=`<div class="muted" style="font-size:12px;margin-bottom:10px">Choose one option each time you activate this ability:</div>`;
+  if(!feat||!feat.choices){alert("Sem opções para mostrar.");return}
+  let body=`<div class="muted" style="font-size:12px;margin-bottom:10px">Escolha uma opção cada vez que ativar esta habilidade:</div>`;
   feat.choices.forEach(ch=>{
     body+=`<div class="opt open" style="border-color:var(--magic);margin-bottom:8px"><div class="on" style="color:var(--magic)">${esc(ch.n)}</div><div class="od" style="display:block">${esc(ch.desc)}</div></div>`;
   });
-  openModal(feat.n,body,'<button class="btn" onclick="closeModal()">Close</button>');
+  openModal(feat.n,body,'<button class="btn" onclick="closeModal()">Fechar</button>');
 }
 
 // ======================================================================
 // TABS — defined here (last file) so all render functions already exist
 // ======================================================================
 const TABS=[
-  {n:"Stats",f:renderStats},
-  {n:"Features",f:renderFeatures},
-  {n:"Combat",f:renderCombat},
-  {n:"Spells",f:renderSpells},
-  {n:"Inventory",f:renderInventory},
-  {n:"Equip",f:renderEquipment},
-  {n:"Notes",f:renderNotes},
-  {n:"Character",f:renderCharacter}
+  {n:"Atributos",f:renderStats},
+  {n:"Características",f:renderFeatures},
+  {n:"Combate",f:renderCombat},
+  {n:"Magias",f:renderSpells},
+  {n:"Inventário",f:renderInventory},
+  {n:"Equipar",f:renderEquipment},
+  {n:"Notas",f:renderNotes},
+  {n:"Personagem",f:renderCharacter}
 ];
 
 // ======================================================================
@@ -489,7 +489,7 @@ const TABS=[
 // ======================================================================
 function boot(){
   if(typeof DATA==="undefined"||!DATA||!DATA.classes){
-    document.body.innerHTML='<div style="padding:30px;color:#e04545;font-family:sans-serif"><h2>Error: data.js not loaded</h2><p>Make sure <code>data.js</code> is in the same folder as <code>app.html</code>.</p></div>';
+    document.body.innerHTML='<div style="padding:30px;color:#e04545;font-family:sans-serif"><h2>Erro: data.js não foi carregado</h2><p>Verifique se <code>data.js</code> está na mesma pasta que <code>app.html</code>.</p></div>';
     return;
   }
   loadChars();loadTheme();loadUnits();renderHome();
