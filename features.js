@@ -1,12 +1,12 @@
 function renderFeatures(c,cls,lvl,p){
   let h='<div class="card"><div class="ct">Class Features</div>';
   const classFeatsNonCombat=(cls.features||[]).filter(f=>
-    f.lvl<=lvl && !isCombatFeature(f) && !f.desc.includes("put it in the 'Class' field")
+    f.lvl<=lvl && !isCombatFeature(f) && !f.desc.includes("put it in the 'Class' field") && !f.desc.includes("coloque-a no campo 'Classe'")
   );
   classFeatsNonCombat.forEach(f=>{
     const hasChoices=f.choices&&f.choices.length;
     let btn=hasChoices?` <button class="btn sm" onclick="event.stopPropagation();showFeatureChoices('class','${esc(f.n)}')" style="font-size:10px">⚡ Activate</button>`:"";
-    if(f.n==="Fighting Style")btn=` <button class="btn sm" onclick="event.stopPropagation();pickFightingStyle()" style="font-size:10px">⚡ Escolher</button>`;
+    if(f.n==="Estilo de Luta")btn=` <button class="btn sm" onclick="event.stopPropagation();pickFightingStyle()" style="font-size:10px">⚡ Escolher</button>`;
     h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(f.n)} <span class="lvtag">lv ${f.lvl} ▾</span>${btn}</div><div class="od">${esc(f.desc||"(no description)")}</div></div>`;
   });
   h+='</div>';

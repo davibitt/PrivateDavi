@@ -444,7 +444,7 @@ const STD_REACTION=[
 ];
 
 // Features that should be shown on COMBAT tab (actionable/combat-relevant)
-const COMBAT_KEYWORDS = /\b(sneak attack|rage|second wind|action surge|divine smite|channel divinity|wild shape|ki|bardic inspiration|martial arts|stunning strike|deflect|lay on hands|favored foe|hunter's mark|reckless attack|brutal strike|mage hand legerdemain|arcane recovery|font of magic|pact magic|eldritch blast|innate sorcery|metamagic|bonus action|reaction|unarmed strike|weapon mastery)\b/i;
+const COMBAT_KEYWORDS = /\b(sneak attack|rage|second wind|action surge|divine smite|channel divinity|wild shape|ki|bardic inspiration|martial arts|stunning strike|deflect|lay on hands|favored foe|hunter's mark|reckless attack|brutal strike|mage hand legerdemain|arcane recovery|font of magic|pact magic|eldritch blast|innate sorcery|metamagic|bonus action|reaction|unarmed strike|weapon mastery|ataque furtivo|fúria|recuperar fôlego|surto de ação|destruição do paladino|canalizar divindade|forma selvagem|inspiração de bardo|artes marciais|golpe atordoante|defletir|mãos consagradas|marca do predador|ataque imprudente|golpe brutal|recuperação arcana|fonte de magia|magia de pacto|raio místico|feitiçaria inata|metamagia|ação bônus|reação|ataque desarmado|maestria em arma)\b/i;
 
 // Features that are purely passive/lore (show only in Features tab)
 function isCombatFeature(feat){
@@ -458,7 +458,7 @@ function isCombatFeature(feat){
     if(hasDice)return true;
   }
   const desc=(feat.desc||"").toLowerCase();
-  if(/attack roll|damage|saving throw|hit points|bonus action|reaction|once per turn|weapon mastery/.test(desc) && !/proficiency in|my choice of|i learn|lore|tool proficiency/.test(desc))return true;
+  if(/attack roll|damage|saving throw|hit points|bonus action|reaction|once per turn|weapon mastery|jogada de ataque|dano|salvaguarda|pontos de vida|ação bônus|reação|uma vez por turno|maestria em arma/.test(desc) && !/proficiency in|my choice of|i learn|lore|tool proficiency|proficiência em|proficiência com|treinamento com/.test(desc))return true;
   return false;
 }
 
@@ -600,9 +600,9 @@ function renderActionOptions(kind,c,cls,lvl,p){
   const considerFeat=(f,source)=>{
     if(!f.desc)return;
     const d=f.desc.toLowerCase();
-    if(kind==="bonus"&&/bonus action/.test(d))extras.push({...f,_src:source});
-    else if(kind==="reaction"&&/\breaction\b/.test(d))extras.push({...f,_src:source});
-    else if(kind==="action"&&/(magic action|as an action|take an action)/.test(d))extras.push({...f,_src:source});
+    if(kind==="bonus"&&/bonus action|ação bônus/.test(d))extras.push({...f,_src:source});
+    else if(kind==="reaction"&&/\breaction\b|\breação\b/.test(d))extras.push({...f,_src:source});
+    else if(kind==="action"&&/(magic action|as an action|take an action|ação usar magia|como uma ação\b|usando uma ação|executa(r)? uma ação)/.test(d))extras.push({...f,_src:source});
   };
   (cls.features||[]).filter(f=>f.lvl<=lvl).forEach(f=>considerFeat(f,cls.name));
   if(c.subclass){const sc=getSubclass(c.subclass);if(sc)(sc.features||[]).filter(f=>f.lvl<=lvl).forEach(f=>considerFeat(f,sc.name))}
