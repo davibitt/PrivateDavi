@@ -267,12 +267,12 @@ function stepAbilities(){
 }
 function parseBgAsiAbilities(txt){
   if(!txt)return [];
-  // Expected like: "+2 and +1 -or- +1 to each from Strength, Dexterity, and Intelligence"
-  const m=txt.match(/from\s+([A-Za-z,\s]+)$/i);
+  // Expected like: "+2 e +1 -ou- +1 em cada um entre Inteligência, Sabedoria e Carisma"
+  const m=txt.match(/entre\s+([A-Za-zÀ-ÿ,\s]+)$/i);
   if(!m)return [];
   const abs=[];
-  const mapping={"strength":"str","dexterity":"dex","constitution":"con","intelligence":"int","wisdom":"wis","charisma":"cha"};
-  m[1].toLowerCase().split(/[,\s]+and\s+|[,\s]+/).forEach(w=>{w=w.trim();if(mapping[w])abs.push(mapping[w])});
+  const mapping={"força":"str","destreza":"dex","constituição":"con","inteligência":"int","sabedoria":"wis","carisma":"cha"};
+  m[1].toLowerCase().split(/[,\s]+e\s+|[,\s]+/).forEach(w=>{w=w.trim();if(mapping[w])abs.push(mapping[w])});
   return abs;
 }
 function cwBgAsiMode(mode){
