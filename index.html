@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>D&D 2024 Character Sheet</title>
+<title>Ficha de Personagem D&D 2024</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,30 +14,30 @@
 <!-- ============= HOME ============= -->
 <div id="home" class="screen active">
   <div style="text-align:center;padding:20px 0 14px">
-    <h1 style="margin:0 0 4px 0;font-size:24px;color:var(--accent2)">Character Sheets</h1>
-    <div class="muted" style="font-size:12px">D&D 2024 · Player's Handbook</div>
+    <h1 style="margin:0 0 4px 0;font-size:24px;color:var(--accent2)">Fichas de Personagem</h1>
+    <div class="muted" style="font-size:12px">D&D 2024 · Livro do Jogador</div>
   </div>
   <div id="charlist"></div>
-  <button class="btn primary full" onclick="goCreate()" style="margin-top:12px">+ New Character</button>
+  <button class="btn primary full" onclick="goCreate()" style="margin-top:12px">+ Novo Personagem</button>
 </div>
 
 <!-- ============= CREATE ============= -->
 <div id="create" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-    <button class="btn sm" onclick="cwBack()">← Back</button>
+    <button class="btn sm" onclick="cwBack()">← Voltar</button>
     <div class="cin" style="font-size:11px;color:var(--accent);letter-spacing:1px" id="cstep">1/7</div>
   </div>
-  <h2 style="margin:0 0 12px 0;font-size:18px;color:var(--accent2)" id="ctitle">New Character</h2>
+  <h2 style="margin:0 0 12px 0;font-size:18px;color:var(--accent2)" id="ctitle">Novo Personagem</h2>
   <div id="cbody"></div>
 </div>
 
 <!-- ============= SHEET ============= -->
 <div id="sheet" class="screen">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <button class="btn sm" onclick="goHome()">← Home</button>
+    <button class="btn sm" onclick="goHome()">← Início</button>
     <div class="row">
-      <button class="restbtn" onclick="shortRest()" title="Short Rest"><div class="ri">☽</div><div class="rl">Short Rest</div></button>
-      <button class="restbtn" onclick="longRest()" title="Long Rest"><div class="ri"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="6" fill="currentColor"/></svg></div><div class="rl">Long Rest</div></button>
+      <button class="restbtn" onclick="shortRest()" title="Descanso Curto"><div class="ri">☽</div><div class="rl">Descanso Curto</div></button>
+      <button class="restbtn" onclick="longRest()" title="Descanso Longo"><div class="ri"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:block"><circle cx="10" cy="10" r="8" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.2"/><circle cx="10" cy="10" r="6" fill="currentColor"/></svg></div><div class="rl">Descanso Longo</div></button>
     </div>
   </div>
 
@@ -67,8 +67,8 @@
 
 <!-- ============= THEME ============= -->
 <button id="themebtn" onclick="toggleTheme()">☀︎</button>
-<span id="themename" style="display:none">Dark</span>
-<button id="unitsbtn" onclick="toggleUnits()" title="Toggle feet ↔ meters">ft</button>
+<span id="themename" style="display:none">Escuro</span>
+<button id="unitsbtn" onclick="toggleUnits()" title="Alternar pés ↔ metros">ft</button>
 
 <!-- Scripts: load in order. data.js MUST come first. -->
 <script src="data.js"></script>
