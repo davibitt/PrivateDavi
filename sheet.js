@@ -59,6 +59,7 @@ function _renderSheetInner(c){
     }
   });
   const raceName=sr?sr.name:race.name;
+  const atCount=countAttunedItems(c);
   // Header
   el("headcard").innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
@@ -111,6 +112,12 @@ function _renderSheetInner(c){
       <div class="cstat"><div class="csv">${passPercep}</div><div class="csl">Passiva</div></div>
       <div class="cstat"><div class="csv">+${p}</div><div class="csl">Prof.</div></div>
     </div>
+    ${(c.magic_items||[]).length?`
+    <div class="sep"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span class="muted" style="font-size:11px">Itens Sintonizados</span>
+      <span class="tag ${atCount>=ATTUNE_MAX?"warn":"magic"}" style="margin:0">${atCount} / ${ATTUNE_MAX}</span>
+    </div>`:""}
   `;
   // Tabs
   el("tabs").innerHTML=TABS.map((t,i)=>`<button class="tab${i===currentTab?" active":""}" onclick="switchTab(${i})">${t.n}</button>`).join("");

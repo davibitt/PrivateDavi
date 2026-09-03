@@ -131,6 +131,18 @@ function _collectResistances(c){
 
 function renderEquipment(c,cls,lvl,p){
   c.equipped_slots=c.equipped_slots||{};
+  const attuned=getAttunedItems(c);
+  let h=`<div class="card"><div class="ct">Sintonia Mágica</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span class="muted" style="font-size:12px">Itens sintonizados (equipados/portados)</span>
+      <span class="tag ${attuned.length>=ATTUNE_MAX?"warn":"magic"}">${attuned.length} / ${ATTUNE_MAX}</span>
+    </div>`;
+  if(attuned.length){
+    h+=attuned.map(a=>`<span class="tag magic" style="margin:2px">${esc(a.name)}</span>`).join(" ");
+  } else {
+    h+='<div class="muted" style="font-size:12px">Nenhum item mágico com sintonia equipado ou portado.</div>';
+  }
+  h+='</div>';
   const slots=[
     {key:"head",label:"Capacete",icon:"🪖"},
     {key:"neck",label:"Colar/Amuleto",icon:"📿"},
@@ -142,7 +154,7 @@ function renderEquipment(c,cls,lvl,p){
     {key:"boots",label:"Botas",icon:"👢"},
     {key:"shield",label:"Mão Sec. (Escudo)",icon:"🛡"}
   ];
-  let h=`<div class="card"><div class="ct">Slots Equipados</div>
+  h+=`<div class="card"><div class="ct">Slots Equipados</div>
     <div class="muted" style="font-size:11px;margin-bottom:8px">Toque em um slot para equipar ou trocar um item do seu inventário.</div>`;
   slots.forEach(s=>{
     const equippedIdx=c.equipped_slots[s.key];
@@ -279,11 +291,18 @@ function openSlotPicker(slotKey){
 
 function equipSlot(slotKey,itemIdx){
   const c=chars[currentId];c.equipped_slots=c.equipped_slots||{};
+  const mi=(c.magic_items||[])[itemIdx];
+  const def=mi?MAGIC_ITEMS_DB.find(x=>x._key===mi.key):null;
+  const alreadyEquipped=Object.values(c.equipped_slots).includes(itemIdx);
+  if(def&&def.attune&&!alreadyEquipped&&countAttunedItems(c)>=ATTUNE_MAX){
+    alert(`Você já tem ${ATTUNE_MAX} itens mágicos sintonizados. Desequipe um item antes de equipar outro que requer sintonia.`);
+    return;
+  }
   // Remove o item de qualquer outro slot onde possa estar
   Object.keys(c.equipped_slots).forEach(k=>{if(c.equipped_slots[k]===itemIdx)delete c.equipped_slots[k];});
   c.equipped_slots[slotKey]=itemIdx;
   // Sincroniza flag .equipped do item
-  const mi=(c.magic_items||[])[itemIdx];if(mi)mi.equipped=true;
+  if(mi)mi.equipped=true;
   saveChars();closeModal();renderSheet();
 }
 

@@ -2,6 +2,29 @@ const EXCLUDED_MAGIC_KEYS=new Set(["weapon-plus","ammo-plus","armor-plus","shiel
 const SELECT_RESIST_KEYS=new Set(["armor-of-resistance","ring-resistance"]);
 const FIXED_MAGIC_DMGRES={"frost-brand":["Fogo"]};
 const DAMAGE_TYPES=["Ácido","Concussivo","Cortante","Elétrico","Fogo","Frio","Força","Necrótico","Perfurante","Psíquico","Radiante","Trovejante","Veneno"];
+const ATTUNE_MAX=3;
+
+// Itens mágicos que requerem sintonia (def.attune) contam automaticamente
+// quando estão equipados (equipped_slots) ou, no caso de armas, portados (carrying).
+function getAttunedItems(c){
+  const mis=c.magic_items||[];
+  const eqSlots=c.equipped_slots||{};
+  const seen=new Set();
+  const list=[];
+  Object.values(eqSlots).forEach(idx=>{
+    if(typeof idx!=="number"||seen.has(idx))return;
+    const mi=mis[idx];if(!mi)return;
+    const def=MAGIC_ITEMS_DB.find(x=>x._key===mi.key);
+    if(def&&def.attune){seen.add(idx);list.push({idx,name:def.name});}
+  });
+  mis.forEach((mi,i)=>{
+    if(seen.has(i)||!mi.carrying)return;
+    const def=MAGIC_ITEMS_DB.find(x=>x._key===mi.key);
+    if(def&&def.slot==="weapon"&&def.attune){seen.add(i);list.push({idx:i,name:def.name});}
+  });
+  return list;
+}
+function countAttunedItems(c){return getAttunedItems(c).length;}
 
 // One-time cleanup: weapons used to be tracked in c.inv (Inventário) separately from
 // c.weapons (Combate), which caused adds/removals in one tab to be invisible in the
@@ -362,7 +385,11 @@ function confirmAddMagicItem(key){
   const def=MAGIC_ITEMS_DB.find(x=>x._key===key);if(!def)return;
   const c=chars[currentId];c.magic_items=c.magic_items||[];
   const bonus=def.hasBonus?(parseInt((document.getElementById("mi-bonus")||{}).value)||0):0;
-  const carrying=def.slot==="weapon"?!!((document.getElementById("mi-carrying")||{}).checked):false;
+  let carrying=def.slot==="weapon"?!!((document.getElementById("mi-carrying")||{}).checked):false;
+  if(carrying&&def.attune&&countAttunedItems(c)>=ATTUNE_MAX){
+    alert(`Você já tem ${ATTUNE_MAX} itens mágicos sintonizados. O item foi adicionado ao inventário, mas não está sendo portado.`);
+    carrying=false;
+  }
   const dmgres=SELECT_RESIST_KEYS.has(key)?[((document.getElementById("mi-resist")||{}).value||DAMAGE_TYPES[0])]:
     (FIXED_MAGIC_DMGRES[key]||undefined);
   const item={key,bonus,carrying,equipped:false,ts:Date.now()};
@@ -406,7 +433,16 @@ function saveMagicItemEdit(i){
   const c=chars[currentId];const mi=(c.magic_items||[])[i];if(!mi)return;
   const def=MAGIC_ITEMS_DB.find(x=>x._key===mi.key);if(!def)return;
   if(def.hasBonus){const sel=document.getElementById("mi-edit-bonus");if(sel)mi.bonus=parseInt(sel.value)||0;}
-  if(def.slot==="weapon"){const cb=document.getElementById("mi-edit-carrying");if(cb)mi.carrying=cb.checked;}
+  if(def.slot==="weapon"){
+    const cb=document.getElementById("mi-edit-carrying");
+    if(cb){
+      if(cb.checked&&!mi.carrying&&def.attune&&countAttunedItems(c)>=ATTUNE_MAX){
+        alert(`Você já tem ${ATTUNE_MAX} itens mágicos sintonizados. Desequipe outro item antes de portar este.`);
+        cb.checked=false;
+      }
+      mi.carrying=cb.checked;
+    }
+  }
   if(SELECT_RESIST_KEYS.has(mi.key)){const sel=document.getElementById("mi-edit-resist");if(sel)mi.dmgres=[sel.value];}
   saveChars();closeModal();renderSheet();
 }
