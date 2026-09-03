@@ -20,11 +20,12 @@ function applyUnitsToDom(root){
 
 function _renderSheetInner(c){
   migrateFeatNamesToKeys(c);
+  migrateSkillNamesToPT(c);
   const cls=getClass(c.class);const race=getRace(c.race);const sr=c.subrace?getSubrace(c.subrace):null;
   const lvl=c.level;const p=profBonus(lvl);
   // Compute combat stats (AC/init/passive)
   const initB=mod(c.attrs.dex);
-  const passPercep=10+mod(c.attrs.wis)+((c.skills||[]).indexOf("Perception")>=0?p:0);
+  const passPercep=10+mod(c.attrs.wis)+((c.skills||[]).indexOf("Percepção")>=0?p:0);
   const arm=getArmor(c.armor)||{ac:10};
   let ac=10+mod(c.attrs.dex);
   if(arm.ac){
@@ -73,7 +74,7 @@ function _renderSheetInner(c){
             <div class="sv" style="font-size:22px">${lvl}</div>
             <button class="hbt" style="width:22px;height:22px;font-size:13px" onclick="changeLevel(1)">+</button>
           </div>
-          <div class="sl">Level</div>
+          <div class="sl">Nível</div>
         </div>
       </div>
     </div>
@@ -88,16 +89,16 @@ function _renderSheetInner(c){
           <input type="number" class="hpi" id="hpc" value="${c.hp_cur}" onchange="saveHP()">
           <button class="hbt hbt-sm" onclick="adjHP(1)">+</button>
         </div>
-        <div class="hpl">Current</div>
+        <div class="hpl">Atual</div>
       </div>
       <div class="hp-slash">/</div>
       <div class="hpcell hpcell-max">
         <div class="hpv">${effectiveMaxHP(c)}</div>
-        <div class="hpl">Max</div>
+        <div class="hpl">Máx.</div>
       </div>
       <div class="hpcell hpcell-tmp">
         <input type="number" class="hpi hpi-sm" id="hptmp" value="${c.hp_tmp||""}" placeholder="0" onchange="saveHP()">
-        <div class="hpl">Temp</div>
+        <div class="hpl">Temp.</div>
       </div>
     </div>
 
@@ -105,10 +106,10 @@ function _renderSheetInner(c){
 
     <!-- Combat stats row (4 compact cells) -->
     <div class="cstats">
-      <div class="cstat"><div class="csv">${ac}</div><div class="csl">AC</div></div>
-      <div class="cstat"><div class="csv">${fmtMod(initB)}</div><div class="csl">Init</div></div>
-      <div class="cstat"><div class="csv">${passPercep}</div><div class="csl">Passive</div></div>
-      <div class="cstat"><div class="csv">+${p}</div><div class="csl">Prof</div></div>
+      <div class="cstat"><div class="csv">${ac}</div><div class="csl">CA</div></div>
+      <div class="cstat"><div class="csv">${fmtMod(initB)}</div><div class="csl">Inic.</div></div>
+      <div class="cstat"><div class="csv">${passPercep}</div><div class="csl">Passiva</div></div>
+      <div class="cstat"><div class="csv">+${p}</div><div class="csl">Prof.</div></div>
     </div>
   `;
   // Tabs
@@ -138,6 +139,26 @@ function migrateFeatNamesToKeys(c){
     const candidate=entry.toLowerCase().replace(/\s*\[origin\]\s*$/i,"").trim();
     if(DATA.feats.some(f=>f._key===candidate)){changed=true;return candidate;}
     return entry;
+  });
+  if(changed)saveChars();
+}
+// One-time cleanup: c.skills/background skill lists used to store English skill
+// names (e.g. "Perception"); the SKILLS list is now Portuguese ("Percepção").
+// Converts any leftover English entries so existing saved characters keep their
+// skill proficiencies and Passive Perception bonus.
+const SKILL_EN_TO_PT={
+  "Acrobatics":"Acrobacia","Animal Handling":"Lidar com Animais","Arcana":"Arcanismo",
+  "Athletics":"Atletismo","Deception":"Enganação","History":"História","Insight":"Intuição",
+  "Intimidation":"Intimidação","Investigation":"Investigação","Medicine":"Medicina",
+  "Nature":"Natureza","Perception":"Percepção","Performance":"Atuação","Persuasion":"Persuasão",
+  "Religion":"Religião","Sleight of Hand":"Prestidigitação","Stealth":"Furtividade","Survival":"Sobrevivência",
+};
+function migrateSkillNamesToPT(c){
+  if(!c.skills||!c.skills.length)return;
+  let changed=false;
+  c.skills=c.skills.map(s=>{
+    if(SKILL_EN_TO_PT[s]){changed=true;return SKILL_EN_TO_PT[s];}
+    return s;
   });
   if(changed)saveChars();
 }
@@ -173,8 +194,8 @@ function fightingStyleWeaponBonus(styles,wd){
   const isMelee=wd.list==="melee"&&wd.type!=="Natural";
   const isTwoHanded=desc.indexOf("duas mãos")>=0;
   const isThrown=desc.indexOf("arremesso")>=0;
-  if(styles.has("archery")&&isRanged){atk+=2;tags.push("Archery +2 acerto");}
-  if(styles.has("dueling")&&isMelee&&!isTwoHanded){dmg+=2;tags.push("Dueling +2 dano");}
+  if(styles.has("archery")&&isRanged){atk+=2;tags.push("Arquearia +2 acerto");}
+  if(styles.has("dueling")&&isMelee&&!isTwoHanded){dmg+=2;tags.push("Duelismo +2 dano");}
   if(styles.has("thrown weapon fighting")&&isThrown){dmg+=2;tags.push("Arremesso +2 dano");}
   return{atk,dmg,tags};
 }
@@ -186,10 +207,10 @@ function effectiveMaxHP(c){
 }
 // List of feats that grant choices (player must manually configure). Matched by _key.
 const CHOICE_FEATS=[
-  {match:/^magic initiate/i,what:"Choose 2 cantrips and 1 level-1 spell from the listed class spell list"},
-  {match:/^skilled$/i,what:"Choose 3 skill or tool proficiencies"},
-  {match:/^crafter$/i,what:"Choose 3 Artisan's Tools to gain proficiency in"},
-  {match:/^musician$/i,what:"Choose 3 Musical Instruments to gain proficiency in"},
+  {match:/^magic initiate/i,what:"Escolha 2 truques e 1 magia de 1º círculo da lista de magias da classe indicada"},
+  {match:/^skilled$/i,what:"Escolha 3 proficiências em perícias ou ferramentas"},
+  {match:/^crafter$/i,what:"Escolha 3 Ferramentas de Artesão para ganhar proficiência"},
+  {match:/^musician$/i,what:"Escolha 3 Instrumentos Musicais para ganhar proficiência"},
 ];
 function getChoiceFeats(c){
   const r=[];
@@ -213,7 +234,7 @@ function changeLevel(delta){
     saveChars();renderSheet();
     showLevelUpSummary(newLvl);
   } else {
-    if(!confirm("Level down? This will reduce your HP.")) return;
+    if(!confirm("Reduzir nível? Isso vai reduzir seus PV.")) return;
     c.level=newLvl;
     c.hp_max=Math.max(1,c.hp_max-perLvl);
     c.hp_cur=Math.min(c.hp_cur,c.hp_max);
@@ -227,45 +248,45 @@ function showLevelUpSummary(newLvl){
   const hpGain=Math.ceil(cls.hd/2)+1+conMod;
   const oldProf=profBonus(newLvl-1);const newProf=profBonus(newLvl);
   let body=`<div class="notice ok" style="margin-bottom:10px">
-    <strong>Level ${newLvl} · ${esc(cls.name)}</strong>
-    <div style="margin-top:4px">+${hpGain} HP (d${cls.hd} avg ${Math.ceil(cls.hd/2)+1} + CON ${fmtMod(conMod)})</div>
+    <strong>Nível ${newLvl} · ${esc(cls.name)}</strong>
+    <div style="margin-top:4px">+${hpGain} PV (d${cls.hd} média ${Math.ceil(cls.hd/2)+1} + CON ${fmtMod(conMod)})</div>
   </div>`;
 
   // Proficiency bonus increase
   if(newProf>oldProf){
-    body+=`<div class="opt open"><div class="on">Proficiency Bonus +1 <span class="lvtag">now +${newProf}</span></div>
-      <div class="od">All your proficient saves, skills, attacks, and spell DCs improve.</div></div>`;
+    body+=`<div class="opt open"><div class="on">Bônus de Proficiência +1 <span class="lvtag">agora +${newProf}</span></div>
+      <div class="od">Todas as suas salvaguardas, perícias, ataques e CDs de magia proficientes melhoram.</div></div>`;
   }
 
   // Extra attacks
   const oldAtk=(cls.attacks||[])[newLvl-2]||1;
   const newAtk=(cls.attacks||[])[newLvl-1]||1;
   if(newAtk>oldAtk){
-    body+=`<div class="opt open"><div class="on">Extra Attack <span class="lvtag">${newAtk} attacks</span></div>
-      <div class="od">You can attack ${newAtk} times whenever you take the Attack action.</div></div>`;
+    body+=`<div class="opt open"><div class="on">Ataque Extra <span class="lvtag">${newAtk} ataques</span></div>
+      <div class="od">Você pode atacar ${newAtk} vezes sempre que executar a ação Atacar.</div></div>`;
   }
 
   // ASI / Feat (improvements array: 0=no, 1,2,3,4,5=nth ASI opportunity)
   const oldImp=(cls.improvements||[])[newLvl-2]||0;
   const newImp=(cls.improvements||[])[newLvl-1]||0;
   if(newImp>oldImp){
-    body+=`<div class="opt open" style="border-color:var(--accent)"><div class="on" style="color:var(--accent)">⭐ Ability Score Improvement / Feat</div>
-      <div class="od">You can either: <br>• Increase one ability score by +2 (max 20)<br>• Increase two ability scores by +1 each<br>• Take a feat of your choice<br><br><em>Remember to apply this manually in the character sheet.</em></div></div>`;
+    body+=`<div class="opt open" style="border-color:var(--accent)"><div class="on" style="color:var(--accent)">⭐ Aumento no Valor de Atributo / Talento</div>
+      <div class="od">Você pode: <br>• Aumentar um valor de atributo em +2 (máx. 20)<br>• Aumentar dois valores de atributo em +1 cada<br>• Escolher um talento à sua escolha<br><br><em>Lembre-se de aplicar isso manualmente na ficha de personagem.</em></div></div>`;
   }
 
   // New class features at this level
   const newClsFeats=(cls.features||[]).filter(f=>f.lvl===newLvl && f.desc);
   newClsFeats.forEach(f=>{
     // Skip "Subclass" feature — handled separately below
-    if(/Subclass/i.test(f.n))return;
+    if(/Subclasse/i.test(f.n))return;
     body+=`<div class="opt open"><div class="on">${esc(f.n)}</div><div class="od">${esc(f.desc)}</div></div>`;
   });
 
   // Subclass choice prompt
-  const subFeat=(cls.features||[]).find(f=>/Subclass/i.test(f.n));
+  const subFeat=(cls.features||[]).find(f=>/Subclasse/i.test(f.n));
   if(subFeat && subFeat.lvl===newLvl && !c.subclass){
-    body+=`<div class="opt open" style="border-color:var(--accent)"><div class="on" style="color:var(--accent)">⭐ Choose Subclass!</div>
-      <div class="od">You can now choose your ${esc(cls.name)} subclass. Go to the Combat tab and tap "Choose →".</div></div>`;
+    body+=`<div class="opt open" style="border-color:var(--accent)"><div class="on" style="color:var(--accent)">⭐ Escolha uma Subclasse!</div>
+      <div class="od">Agora você pode escolher sua subclasse de ${esc(cls.name)}. Vá até a aba Combate e toque em "Escolher →".</div></div>`;
   }
 
   // New subclass features at this level
@@ -289,16 +310,16 @@ function showLevelUpSummary(newLvl){
       const oldTotal=WARLOCK_SLOTS_COUNT[newLvl-2]||0;const newTotal=WARLOCK_SLOTS_COUNT[newLvl-1]||0;
       const oldLv=WARLOCK_SLOT_LEVEL[newLvl-2]||0;const newLv=WARLOCK_SLOT_LEVEL[newLvl-1]||0;
       if(newTotal>oldTotal || newLv>oldLv){
-        body+=`<div class="opt open"><div class="on">Pact Magic <span class="lvtag">${newTotal} slot${newTotal>1?"s":""} of L${newLv}</span></div>
-          <div class="od">Your pact slots are now L${newLv}. Recover on short rest.</div></div>`;
+        body+=`<div class="opt open"><div class="on">Magia de Pacto <span class="lvtag">${newTotal} espaço${newTotal>1?"s":""} de C${newLv}</span></div>
+          <div class="od">Seus espaços de pacto agora são de C${newLv}. Recuperam em Descanso Curto.</div></div>`;
       }
     }
     if(caster==="full"||caster==="half"){
       for(let i=0;i<newSlots.length;i++){
         const o=oldSlots[i]||0;const n=newSlots[i]||0;
         if(n>o){
-          body+=`<div class="opt open"><div class="on">New spell slot: Level ${i+1} <span class="lvtag">${n-o} new</span></div>
-            <div class="od">You have ${n} total level-${i+1} slots now.</div></div>`;
+          body+=`<div class="opt open"><div class="on">Novo espaço de magia: Círculo ${i+1} <span class="lvtag">${n-o} novo(s)</span></div>
+            <div class="od">Agora você tem ${n} espaços de ${i+1}º círculo no total.</div></div>`;
         }
       }
     }
@@ -327,20 +348,20 @@ function showLevelUpSummary(newLvl){
   // Prompt to choose subclass if applies (shown separately from class features)
   // (already handled above by "Choose Subclass!" prompt)
 
-  openModal(`Level Up! → Level ${newLvl}`,body,'<button class="btn primary" onclick="closeModal()">Awesome!</button>');
+  openModal(`Subiu de Nível! → Nível ${newLvl}`,body,'<button class="btn primary" onclick="closeModal()">Excelente!</button>');
 }
 
 function shortRest(){
   const c=chars[currentId];
   // Reset warlock slots (pact magic recovers on SR)
   if(c.class==="warlock")c.spell_slots_used={};
-  saveChars();renderSheet();alert("Short rest complete.");
+  saveChars();renderSheet();alert("Descanso Curto concluído.");
 }
 function longRest(){
   const c=chars[currentId];
   c.hp_cur=effectiveMaxHP(c);c.hp_tmp=0;c.spell_slots_used={};c.limited_used={};
   combatState={action:0,bonus:0,reaction:0,actionMax:1};
-  saveChars();renderSheet();alert("Long rest complete. HP, spell slots, and features restored.");
+  saveChars();renderSheet();alert("Descanso Longo concluído. PV, espaços de magia e características restaurados.");
 }
 function goHome(){show("home");renderHome()}
 
@@ -349,7 +370,7 @@ function goHome(){show("home");renderHome()}
 // ======================================================================
 function renderStats(c,cls,lvl,p){
   // Abilities: score, mod, and save mod inline (compact)
-  let h='<div class="card"><div class="ct">Ability Scores <button class="btn sm" onclick="editAttrs()" style="font-size:10px">✎ Edit</button></div><div class="g6">';
+  let h='<div class="card"><div class="ct">Valores de Atributo <button class="btn sm" onclick="editAttrs()" style="font-size:10px">✎ Editar</button></div><div class="g6">';
   ABILS.forEach(a=>{
     const sc=c.attrs[a];const m=mod(sc);
     const isSave=cls.saves.map(s=>s.toLowerCase().slice(0,3)).indexOf(a.slice(0,3))>=0;
@@ -361,7 +382,7 @@ function renderStats(c,cls,lvl,p){
   });
   h+='</div></div>';
   // Skills
-  h+='<div class="card"><div class="ct">Skills <button class="btn sm" onclick="editSkills()" style="font-size:10px">✎ Edit</button></div>';
+  h+='<div class="card"><div class="ct">Perícias <button class="btn sm" onclick="editSkills()" style="font-size:10px">✎ Editar</button></div>';
   SKILLS.forEach(([n,a])=>{
     const prof=(c.skills||[]).indexOf(n)>=0;
     const exp=(c.expertise||[]).indexOf(n)>=0;
@@ -379,14 +400,14 @@ function renderStats(c,cls,lvl,p){
 // ======================================================================
 function editAttrs(){
   const c=chars[currentId];
-  let body='<div class="muted" style="font-size:12px;margin-bottom:8px">Adjust your ability scores directly. Use this to apply ASI, background bonuses, or fix mistakes.</div><div class="g6">';
+  let body='<div class="muted" style="font-size:12px;margin-bottom:8px">Ajuste seus valores de atributo diretamente. Use isso para aplicar Aumento no Valor de Atributo, bônus de antecedente ou corrigir erros.</div><div class="g6">';
   ABILS.forEach(a=>{
     body+=`<div class="ab"><div class="abn">${ABIL_SHORT[a]}</div>
       <input type="number" id="ea-${a}" value="${c.attrs[a]}" min="1" max="30" style="width:100%;padding:4px;font-family:Cinzel,serif;font-size:18px;text-align:center;border:1px solid var(--border);border-radius:4px;background:var(--bg2);color:var(--text)">
       </div>`;
   });
   body+='</div>';
-  openModal("Edit Abilities",body,`<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveAttrs()">Save</button>`);
+  openModal("Editar Atributos",body,`<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveAttrs()">Salvar</button>`);
 }
 function saveAttrs(){
   const c=chars[currentId];
@@ -398,7 +419,7 @@ function saveAttrs(){
 }
 function editSkills(){
   const c=chars[currentId];const current=new Set(c.skills||[]);
-  let body='<div class="muted" style="font-size:12px;margin-bottom:8px">Toggle proficiency in skills.</div>';
+  let body='<div class="muted" style="font-size:12px;margin-bottom:8px">Ative/desative a proficiência em perícias.</div>';
   SKILLS.forEach(([n,a])=>{
     const checked=current.has(n);
     body+=`<label class="skr" style="cursor:pointer">
@@ -406,7 +427,7 @@ function editSkills(){
       <span style="flex:1">${esc(n)} <span class="muted" style="font-size:10px">${ABIL_SHORT[a]}</span></span>
     </label>`;
   });
-  openModal("Edit Skills",body,`<button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" onclick="saveSkillsEdit()">Save</button>`);
+  openModal("Editar Perícias",body,`<button class="btn" onclick="closeModal()">Cancelar</button><button class="btn primary" onclick="saveSkillsEdit()">Salvar</button>`);
 }
 function saveSkillsEdit(){
   const c=chars[currentId];
@@ -421,26 +442,26 @@ function saveSkillsEdit(){
 // STANDARD D&D 2024 ACTIONS (for Combat tab accordion)
 // ======================================================================
 const STD_ACTIONS=[
-  {n:"Attack",desc:"Make one weapon attack or unarmed strike (or more with Extra Attack). Tap a weapon above to roll."},
-  {n:"Dash",desc:"Gain extra movement equal to your Speed for this turn."},
-  {n:"Disengage",desc:"Your movement this turn doesn't provoke Opportunity Attacks."},
-  {n:"Dodge",desc:"Until your next turn, attack rolls against you have Disadvantage and you have Advantage on Dex saves (if you can see the attacker and aren't Incapacitated)."},
-  {n:"Grapple",desc:"Unarmed Strike (Grapple) vs a target no more than one size larger. Target makes a Str or Dex save vs your DC (8 + Str mod + Prof). On fail, target has the Grappled condition."},
-  {n:"Help",desc:"Either: (a) an ally gains Advantage on their next ability check you can help with, or (b) an ally within 5 ft gains Advantage on their next attack roll vs a creature within 5 ft of you."},
-  {n:"Hide",desc:"Dex (Stealth) check. You must be Heavily Obscured or have 3/4 Cover from your watchers. On success, gain the Invisible condition until you attack, make a damage roll, force a save, or make noise."},
-  {n:"Influence",desc:"Interact with a creature using Deception, Intimidation, Performance, or Persuasion (vs the DM's DC)."},
-  {n:"Magic",desc:"Cast a spell with a casting time of 1 Action, or use a magic feature whose action is Magic."},
-  {n:"Ready",desc:"Prepare an action to trigger on a specific condition you describe before the start of your next turn."},
-  {n:"Search",desc:"Wis check (Insight, Medicine, Perception, or Survival, as the DM decides)."},
-  {n:"Shove",desc:"Unarmed Strike (Shove) vs a target no more than one size larger. Target makes Str or Dex save vs your DC. On fail, push 5 ft or knock Prone."},
-  {n:"Study",desc:"Int check (Arcana, History, Investigation, Nature, or Religion, as the DM decides)."},
-  {n:"Utilize",desc:"Use a nonmagical object such as a torch, lantern, or similar item."}
+  {n:"Atacar",desc:"Realizo um ataque com arma ou Ataque Desarmado (ou mais com Ataque Extra). Toque em uma arma acima para rolar."},
+  {n:"Correr",desc:"Ganho movimento extra igual ao meu Deslocamento neste turno."},
+  {n:"Desengajar",desc:"Meu movimento neste turno não provoca Ataques de Oportunidade."},
+  {n:"Esquivar",desc:"Até meu próximo turno, jogadas de ataque contra mim têm Desvantagem e tenho Vantagem em salvaguardas de Destreza (se eu puder ver o atacante e não estiver Incapacitado)."},
+  {n:"Imobilizar",desc:"Ataque Desarmado (Imobilizar) contra um alvo no máximo um tamanho maior. O alvo faz uma salvaguarda de Força ou Destreza contra minha CD (8 + mod. de Força + Prof.). Em caso de falha, o alvo tem a condição Imobilizado."},
+  {n:"Ajudar",desc:"Ou: (a) um aliado ganha Vantagem no próximo teste de atributo em que eu possa ajudar, ou (b) um aliado a até 1,5 metro ganha Vantagem no próximo ataque contra uma criatura a até 1,5 metro de mim."},
+  {n:"Esconder",desc:"Teste de Destreza (Furtividade). Devo estar Fortemente Obscurecido ou ter 3/4 de Cobertura dos meus observadores. Em caso de sucesso, ganho a condição Invisível até atacar, fazer uma jogada de dano, forçar uma salvaguarda ou fazer barulho."},
+  {n:"Influenciar",desc:"Interajo com uma criatura usando Enganação, Intimidação, Atuação ou Persuasão (contra a CD do Mestre)."},
+  {n:"Usar Magia",desc:"Conjuro uma magia com tempo de conjuração de 1 Ação, ou uso uma característica mágica cuja ação seja Usar Magia."},
+  {n:"Preparar",desc:"Preparo uma ação para disparar sob uma condição específica que descrevo antes do início do meu próximo turno."},
+  {n:"Procurar",desc:"Teste de Sabedoria (Intuição, Medicina, Percepção ou Sobrevivência, à escolha do Mestre)."},
+  {n:"Empurrar",desc:"Ataque Desarmado (Empurrar) contra um alvo no máximo um tamanho maior. O alvo faz uma salvaguarda de Força ou Destreza contra minha CD. Em caso de falha, empurro 1,5 metro ou o derrubo (Caído)."},
+  {n:"Analisar",desc:"Teste de Inteligência (Arcanismo, História, Investigação, Natureza ou Religião, à escolha do Mestre)."},
+  {n:"Usar Objeto",desc:"Uso um objeto não mágico, como uma tocha, lanterna ou item semelhante."}
 ];
 const STD_BONUS=[
-  {n:"Offhand Attack",desc:"If you attack with a Light weapon as part of the Attack action, you can use a Bonus Action to attack with a different Light weapon in your other hand. No ability mod added to damage unless negative."}
+  {n:"Ataque com a Mão Secundária",desc:"Se eu atacar com uma arma Leve como parte da ação Atacar, posso usar uma Ação Bônus para atacar com outra arma Leve na outra mão. Nenhum modificador de atributo é somado ao dano, a menos que seja negativo."}
 ];
 const STD_REACTION=[
-  {n:"Opportunity Attack",desc:"When a creature you can see moves out of your reach, use your Reaction to make one melee attack against it."}
+  {n:"Ataque de Oportunidade",desc:"Quando uma criatura que posso ver sai do meu alcance, uso minha Reação para fazer um ataque corpo a corpo contra ela."}
 ];
 
 // Features that should be shown on COMBAT tab (actionable/combat-relevant)
@@ -482,32 +503,32 @@ function renderCombat(c,cls,lvl,p){
     }
   }
   // Actions pips + standard actions accordion
-  h+='<div class="card"><div class="ct">Turn Actions <button class="btn sm" onclick="resetTurn()">↺ New Turn</button></div>';
+  h+='<div class="card"><div class="ct">Ações do Turno <button class="btn sm" onclick="resetTurn()">↺ Novo Turno</button></div>';
   // Action
   let actPips="";for(let i=0;i<combatState.actionMax;i++){actPips+=`<span class="pip ${i<combatState.action?"off":"on"}" onclick="togglePip('action',${i})"></span>`}
   h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="display:flex;justify-content:space-between;align-items:center">
-    <span style="flex:1">Action</span><span class="pips" onclick="event.stopPropagation()">${actPips}</span><span class="tog" style="margin-left:8px">▾</span>
+    <span style="flex:1">Ação</span><span class="pips" onclick="event.stopPropagation()">${actPips}</span><span class="tog" style="margin-left:8px">▾</span>
   </div><div class="od">${renderActionOptions("action",c,cls,lvl,p)}</div></div>`;
   // Bonus
   h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="display:flex;justify-content:space-between;align-items:center">
-    <span style="flex:1">Bonus Action</span><span class="pips" onclick="event.stopPropagation()"><span class="pip ${combatState.bonus?"off":"on"}" onclick="togglePip('bonus',0)"></span></span><span class="tog" style="margin-left:8px">▾</span>
+    <span style="flex:1">Ação Bônus</span><span class="pips" onclick="event.stopPropagation()"><span class="pip ${combatState.bonus?"off":"on"}" onclick="togglePip('bonus',0)"></span></span><span class="tog" style="margin-left:8px">▾</span>
   </div><div class="od">${renderActionOptions("bonus",c,cls,lvl,p)}</div></div>`;
   // Reaction
   h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on" style="display:flex;justify-content:space-between;align-items:center">
-    <span style="flex:1">Reaction</span><span class="pips" onclick="event.stopPropagation()"><span class="pip ${combatState.reaction?"off":"on"}" onclick="togglePip('reaction',0)"></span></span><span class="tog" style="margin-left:8px">▾</span>
+    <span style="flex:1">Reação</span><span class="pips" onclick="event.stopPropagation()"><span class="pip ${combatState.reaction?"off":"on"}" onclick="togglePip('reaction',0)"></span></span><span class="tog" style="margin-left:8px">▾</span>
   </div><div class="od">${renderActionOptions("reaction",c,cls,lvl,p)}</div></div>`;
   // Action Surge (Fighter)
   if(c.class==="fighter"&&lvl>=2){
     const used=(c.limited_used||{})["Action Surge"]||0;
     const max=lvl>=17?2:1;
     let pipsH="";for(let i=0;i<max;i++){pipsH+=`<span class="pip ${i<used?"off":"on"}" onclick="useSurge()"></span>`}
-    h+=`<div class="acr" style="border-color:var(--accent)"><div class="an" style="color:var(--accent)">⚡ Action Surge</div><div class="pips">${pipsH}</div></div>`;
+    h+=`<div class="acr" style="border-color:var(--accent)"><div class="an" style="color:var(--accent)">⚡ Surto de Ação</div><div class="pips">${pipsH}</div></div>`;
   }
   h+='</div>';
 
   // Weapons
-  h+='<div class="card"><div class="ct">Weapons <button class="btn sm" onclick="addWeapon()">+ Add</button></div>';
-  if(!c.weapons||!c.weapons.length){h+='<div class="muted" style="font-size:12px">No weapons added.</div>'}
+  h+='<div class="card"><div class="ct">Armas <button class="btn sm" onclick="addWeapon()">+ Adicionar</button></div>';
+  if(!c.weapons||!c.weapons.length){h+='<div class="muted" style="font-size:12px">Nenhuma arma adicionada.</div>'}
   else{
     c.weapons.forEach((w,i)=>{
       const wd=getWeapon(w.key);if(!wd)return;
@@ -521,9 +542,9 @@ function renderCombat(c,cls,lvl,p){
       h+=`<div class="wpr"><div class="wpn">${esc(w.custom_name||wd.name)}${w.mag?` <span class="tag accent">+${w.mag}</span>`:""}
         <button class="btn sm" onclick="editWeapon(${i})" style="font-size:10px">✎</button></div>
         <div class="wps">
-          <div><div class="v">${fmtMod(atkMod)}</div><div class="l">Hit</div></div>
+          <div><div class="v">${fmtMod(atkMod)}</div><div class="l">Acerto</div></div>
           <div><div class="v">${dmg}</div><div class="l">${esc(wd.damageType||"")}</div></div>
-          <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
+          <div><div class="v" style="font-size:12px">${esc(wd.range||"Corpo a Corpo")}</div><div class="l">Alcance</div></div>
         </div>
         ${fs.tags.length?`<div style="margin-top:4px">${fs.tags.map(t=>`<span class="tag ok" style="font-size:9px">${esc(t)}</span>`).join(" ")}</div>`:""}
         ${wd.description?`<div class="muted" style="font-size:11px;margin-top:4px">${esc(wd.description)}</div>`:""}
@@ -549,9 +570,9 @@ function renderCombat(c,cls,lvl,p){
     h+=`<div class="wpr"><div class="wpn">${esc(def.name)}${bonus?` <span class="tag accent">+${bonus}</span>`:""} <span class="tag magic" style="font-size:10px">✦</span>
       <button class="btn sm" onclick="openMagicItemDetail(${miIdx})" style="font-size:10px">✎</button></div>
       <div class="wps">
-        <div><div class="v">${fmtMod(atkMod)}</div><div class="l">Hit</div></div>
+        <div><div class="v">${fmtMod(atkMod)}</div><div class="l">Acerto</div></div>
         <div><div class="v">${dmg}</div><div class="l">${esc(wd.damageType||"")}</div></div>
-        <div><div class="v" style="font-size:12px">${esc(wd.range||"Melee")}</div><div class="l">Range</div></div>
+        <div><div class="v" style="font-size:12px">${esc(wd.range||"Corpo a Corpo")}</div><div class="l">Alcance</div></div>
       </div>
       ${fs.tags.length?`<div style="margin-top:4px">${fs.tags.map(t=>`<span class="tag ok" style="font-size:9px">${esc(t)}</span>`).join(" ")}</div>`:""}
       <div class="muted" style="font-size:11px;margin-top:4px">${esc(def.desc.slice(0,100))}${def.desc.length>100?"…":""}</div>
@@ -573,10 +594,10 @@ function renderCombat(c,cls,lvl,p){
   if(race)(race.traits||[]).filter(f=>f.lvl<=lvl&&f.desc&&isCombatFeature(f)).forEach(f=>combatFeats.push({...f,_src:"race",_srcName:race.name}));
 
   if(combatFeats.length){
-    h+='<div class="card"><div class="ct">Combat Features</div>';
+    h+='<div class="card"><div class="ct">Características de Combate</div>';
     combatFeats.forEach(f=>{
       const scale=getScalingAt(f.scaling,lvl);
-      const srcBadge=f._src==="subclass"?' <span class="tag accent">Subclass</span>':f._src==="race"||f._src==="subrace"?' <span class="tag magic">Racial</span>':'';
+      const srcBadge=f._src==="subclass"?' <span class="tag accent">Subclasse</span>':f._src==="race"||f._src==="subrace"?' <span class="tag magic">Racial</span>':'';
       h+=`<div class="opt" onclick="this.classList.toggle('open')"><div class="on">${esc(f.n)}${scale?` <span class="tag ok">${esc(scale)}</span>`:""}${srcBadge}<span class="tog">▾</span></div><div class="od">${esc(f.desc)}</div></div>`;
     });
     h+='</div>';
@@ -584,7 +605,7 @@ function renderCombat(c,cls,lvl,p){
 
   // Subclass prompt
   if(!c.subclass && hasSubclassAtLevel(cls,lvl)){
-    h+=`<div class="notice warn" style="font-size:12px">⭐ You can choose a subclass! <button class="btn sm" onclick="pickSubclass()">Choose →</button></div>`;
+    h+=`<div class="notice warn" style="font-size:12px">⭐ Você pode escolher uma subclasse! <button class="btn sm" onclick="pickSubclass()">Escolher →</button></div>`;
   }
   el("tab2").innerHTML=h;
 }
@@ -610,7 +631,7 @@ function renderActionOptions(kind,c,cls,lvl,p){
   const race=getRace(c.race);if(race)(race.traits||[]).filter(f=>f.lvl<=lvl).forEach(f=>considerFeat(f,race.name));
 
   if(extras.length){
-    h+='<div style="border-top:1px dashed var(--border);margin:8px 0;padding-top:6px"><div class="lbl" style="margin-bottom:4px">From your features</div>';
+    h+='<div style="border-top:1px dashed var(--border);margin:8px 0;padding-top:6px"><div class="lbl" style="margin-bottom:4px">Das suas características</div>';
     extras.forEach(f=>{
       const scale=getScalingAt(f.scaling,lvl);
       h+=`<div style="margin-bottom:6px"><strong style="color:var(--magic)">${esc(f.n)}${scale?" ("+esc(scale)+")":""}:</strong> <span class="muted" style="font-size:10px">${esc(f._src)}</span><br><span style="font-size:11px">${esc(f.desc)}</span></div>`;
@@ -630,7 +651,7 @@ function resetTurn(){combatState={action:0,bonus:0,reaction:0,actionMax:1};rende
 function useSurge(){
   const c=chars[currentId];const lvl=c.level;
   const used=(c.limited_used||{})["Action Surge"]||0;const max=lvl>=17?2:1;
-  if(used>=max){alert("No surges left!");return}
+  if(used>=max){alert("Nenhum surto restante!");return}
   c.limited_used=c.limited_used||{};c.limited_used["Action Surge"]=used+1;
   combatState.action=0;  // reset action used (Surge refreshes it)
   saveChars();renderSheet();
@@ -638,7 +659,7 @@ function useSurge(){
 
 function hasSubclassAtLevel(cls,lvl){
   // Most classes get subclass at 3; warlock/cleric/sorcerer at 1-3
-  const subFeat=(cls.features||[]).find(f=>/Subclass/i.test(f.n));
+  const subFeat=(cls.features||[]).find(f=>/Subclasse/i.test(f.n));
   return subFeat && lvl>=subFeat.lvl;
 }
 
@@ -648,13 +669,13 @@ function pickSubclass(){
     const active=c.subclass===s._key;
     const avail=(s.features||[]).filter(f=>f.lvl<=lvl && f.desc);
     // Preview: list feature names as compact bullets
-    const previewList=avail.map(f=>`<div style="margin-top:4px"><strong style="color:var(--accent2)">${esc(f.n)}</strong> <span class="muted" style="font-size:10px">(lv ${f.lvl})</span><br><span style="font-size:11px;color:var(--text2)">${esc(f.desc.slice(0,120))}${f.desc.length>120?"…":""}</span></div>`).join("");
+    const previewList=avail.map(f=>`<div style="margin-top:4px"><strong style="color:var(--accent2)">${esc(f.n)}</strong> <span class="muted" style="font-size:10px">(nv ${f.lvl})</span><br><span style="font-size:11px;color:var(--text2)">${esc(f.desc.slice(0,120))}${f.desc.length>120?"…":""}</span></div>`).join("");
     return `<div class="card" style="border:1px solid ${active?"var(--accent)":"var(--border)"};cursor:pointer;margin-bottom:10px" onclick="selectSub('${s._key}')">
-      <div style="font-family:Cinzel,serif;font-size:14px;color:${active?"var(--accent)":"var(--accent2)"}">${esc(s.name)}${active?' <span class="tag ok">Current</span>':''}</div>
-      <div style="margin-top:6px">${previewList||'<span class="muted">No features at this level yet.</span>'}</div>
+      <div style="font-family:Cinzel,serif;font-size:14px;color:${active?"var(--accent)":"var(--accent2)"}">${esc(s.name)}${active?' <span class="tag ok">Atual</span>':''}</div>
+      <div style="margin-top:6px">${previewList||'<span class="muted">Sem características neste nível ainda.</span>'}</div>
     </div>`;
   }).join("");
-  openModal("Choose Subclass",rows,'<button class="btn" onclick="closeModal()">Cancel</button>');
+  openModal("Escolher Subclasse",rows,'<button class="btn" onclick="closeModal()">Cancelar</button>');
 }
 function selectSub(k){
   chars[currentId].subclass=k;chars[currentId].subclass_choices=[];
@@ -664,7 +685,7 @@ function selectSub(k){
 function addWeapon(){
   const ws=DATA.weapons.filter(w=>w.damage);
   const rows=ws.map(w=>`<div class="opt" onclick="pickWpn('${w._key}')"><div class="on">${esc(w.name)} <span class="lvtag">${w.damage} ${esc(w.damageType||"")}</span></div><div class="od" style="display:block">${esc(w.description||"")}${w.range?" · "+esc(w.range):""}${masteryHtml(w)}</div></div>`).join("");
-  openModal("Add Weapon",rows);
+  openModal("Adicionar Arma",rows);
 }
 function pickWpn(k){
   const w=getWeapon(k);
@@ -684,28 +705,28 @@ function openWeaponDetails(i){
   let body=`<div class="muted" style="font-size:12px;margin-bottom:8px">${wd?esc(wd.damage+" "+(wd.damageType||"")):""}${wd&&wd.range?" · "+esc(wd.range):""}</div>`;
   if(wd&&wd.description)body+=`<div style="font-size:12px;margin-bottom:8px">${esc(wd.description)}</div>`;
   if(wd)body+=masteryHtml(wd);
-  if(bonus)body+=`<div class="tag accent" style="margin-bottom:8px">Magical +${bonus}</div>`;
+  if(bonus)body+=`<div class="tag accent" style="margin-bottom:8px">Mágica +${bonus}</div>`;
   if(w.note)body+=`<div style="font-size:13px;white-space:pre-wrap;line-height:1.5;margin-top:6px;padding:8px;background:var(--bg2);border-radius:var(--r)">${esc(w.note)}</div>`;
   openModal(name,body,
-    `<button class="btn danger" onclick="rmWeaponConfirm(${i})">✕ Delete</button>
-     <button class="btn" onclick="editWeapon(${i})">✎ Edit</button>
-     <button class="btn" onclick="closeModal()">Close</button>`);
+    `<button class="btn danger" onclick="rmWeaponConfirm(${i})">✕ Excluir</button>
+     <button class="btn" onclick="editWeapon(${i})">✎ Editar</button>
+     <button class="btn" onclick="closeModal()">Fechar</button>`);
 }
-function rmWeaponConfirm(i){if(!confirm("Delete this weapon?"))return;rmWeapon(i);closeModal()}
+function rmWeaponConfirm(i){if(!confirm("Excluir esta arma?"))return;rmWeapon(i);closeModal()}
 
 function editWeapon(i){
   const c=chars[currentId];const w=c.weapons[i];if(!w)return;
   const wd=getWeapon(w.key);
   const baseName=wd?wd.name:w.name;
   openModal(baseName,
-    `<div class="f"><div class="lbl">Custom name (optional)</div><input type="text" id="wname" value="${esc(w.custom_name||"")}" placeholder="e.g. Oathbow, Flame Tongue"></div>
-     <div class="f"><div class="lbl">Magical Bonus</div><select id="wmag">
-       ${[0,1,2,3].map(n=>`<option value="${n}"${(w.mag||0)===n?" selected":""}>${n?"+"+n:"None"}</option>`).join("")}
+    `<div class="f"><div class="lbl">Nome personalizado (opcional)</div><input type="text" id="wname" value="${esc(w.custom_name||"")}" placeholder="ex.: Arco do Juramento, Língua de Fogo"></div>
+     <div class="f"><div class="lbl">Bônus Mágico</div><select id="wmag">
+       ${[0,1,2,3].map(n=>`<option value="${n}"${(w.mag||0)===n?" selected":""}>${n?"+"+n:"Nenhum"}</option>`).join("")}
      </select></div>
-     <div class="f"><div class="lbl">Magical Properties / Notes</div><textarea id="wnote" rows="5" placeholder="e.g. +3d6 piercing vs your sworn enemy; glows when undead within 60 ft">${esc(w.note||"")}</textarea></div>`,
-    `<button class="btn danger" onclick="rmWeaponConfirm(${i})">✕ Delete</button>
-     <button class="btn" onclick="closeModal()">Cancel</button>
-     <button class="btn primary" onclick="saveWeaponEdit(${i})">💾 Save</button>`);
+     <div class="f"><div class="lbl">Propriedades Mágicas / Notas</div><textarea id="wnote" rows="5" placeholder="ex.: +3d6 perfurante contra seu inimigo jurado; brilha perto de mortos-vivos a até 18 metros">${esc(w.note||"")}</textarea></div>`,
+    `<button class="btn danger" onclick="rmWeaponConfirm(${i})">✕ Excluir</button>
+     <button class="btn" onclick="closeModal()">Cancelar</button>
+     <button class="btn primary" onclick="saveWeaponEdit(${i})">💾 Salvar</button>`);
   setTimeout(()=>{const t=el("wname");if(t)t.focus()},50);
 }
 function saveWeaponEdit(i){
@@ -730,11 +751,11 @@ function renderSpells(c,cls,lvl,p){
   if(caster){
     const ab=SPELL_ABILITY[c.class];const abMod=mod(c.attrs[ab]);
     const dc=8+p+abMod;const atk=p+abMod;
-    h+=`<div class="card"><div class="ct">${esc(cls.name)} Spellcasting</div>
+    h+=`<div class="card"><div class="ct">Conjuração de ${esc(cls.name)}</div>
       <div class="row">
-        <div class="stat"><div class="sv">${dc}</div><div class="sl">Save DC</div></div>
-        <div class="stat"><div class="sv">${fmtMod(atk)}</div><div class="sl">Attack</div></div>
-        <div class="stat"><div class="sv">${ABIL_SHORT[ab]}</div><div class="sl">Ability</div></div>
+        <div class="stat"><div class="sv">${dc}</div><div class="sl">CD Salv.</div></div>
+        <div class="stat"><div class="sv">${fmtMod(atk)}</div><div class="sl">Ataque</div></div>
+        <div class="stat"><div class="sv">${ABIL_SHORT[ab]}</div><div class="sl">Atributo</div></div>
       </div></div>`;
     // Prepared spells (2024 PHB fixed-per-level table; cantrips don't count)
     const preparedMax=getPreparedMax(c);
@@ -752,13 +773,13 @@ function renderSpells(c,cls,lvl,p){
       slots=new Array(lvSlot).fill(0);slots[lvSlot-1]=total;
     }
     if(slots.length){
-      h+='<div class="card"><div class="ct">Spell Slots</div>';
+      h+='<div class="card"><div class="ct">Espaços de Magia</div>';
       slots.forEach((total,i)=>{
         if(!total)return;
         const circle=i+1;
         const used=(c.spell_slots_used||{})[circle]||0;
         let pipsH="";for(let j=0;j<total;j++){pipsH+=`<span class="pip ${j<used?"off":"on"}" onclick="toggleSlot(${circle},${j})"></span>`}
-        h+=`<div class="acr"><div class="an">${caster==="warlock"?"Pact":"Lv"} ${circle}</div><div class="pips">${pipsH}</div></div>`;
+        h+=`<div class="acr"><div class="an">${caster==="warlock"?"Pacto":"Círc."} ${circle}</div><div class="pips">${pipsH}</div></div>`;
       });
       h+='</div>';
     }
@@ -768,10 +789,10 @@ function renderSpells(c,cls,lvl,p){
   if(racial.length){
     const ab=c.racial_spell_ability||"cha";const abMod=mod(c.attrs[ab]);
     const dc=8+p+abMod;const atk=p+abMod;
-    h+=`<div class="card"><div class="ct" style="color:var(--magic)">Racial Magic · ${ABIL_SHORT[ab]}</div>
+    h+=`<div class="card"><div class="ct" style="color:var(--magic)">Magia Racial · ${ABIL_SHORT[ab]}</div>
       <div class="row" style="margin-bottom:8px">
-        <div class="stat"><div class="sv">${dc}</div><div class="sl">Save DC</div></div>
-        <div class="stat"><div class="sv">${fmtMod(atk)}</div><div class="sl">Attack</div></div>
+        <div class="stat"><div class="sv">${dc}</div><div class="sl">CD Salv.</div></div>
+        <div class="stat"><div class="sv">${fmtMod(atk)}</div><div class="sl">Ataque</div></div>
       </div>`;
     racial.forEach(rs=>{
       const sp=rs.spell;
@@ -780,16 +801,16 @@ function renderSpells(c,cls,lvl,p){
       // Usage pip for once-per-long-rest
       const key="racial:"+sp._key;
       const used=(c.racial_spell_uses||{})[key]||0;
-      let badge='<span class="tag magic">At Will</span>';
+      let badge='<span class="tag magic">À Vontade</span>';
       let usageHtml="";
       if(isOnceLR){
-        badge='<span class="tag warn">1/LR</span>';
+        badge='<span class="tag warn">1/DL</span>';
         usageHtml=`<span class="pip ${used?"off":"on"}" onclick="event.stopPropagation();toggleRacialUse('${esc(sp._key)}')"></span>`;
       }
       h+=`<div class="spl" onclick="showRacialSpell('${esc(sp._key)}','${esc(rs.source)}','${esc(rs.firstCol)}')">
         <div class="sph">
           <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;flex:1">
-            <span class="spb">${sp.level===0?"Cantrip":"L"+sp.level}</span>
+            <span class="spb">${sp.level===0?"Truque":"C"+sp.level}</span>
             <span class="spn">${esc(sp.name)}</span>
             ${badge}
           </div>
@@ -803,17 +824,17 @@ function renderSpells(c,cls,lvl,p){
 
   // My chosen spells (always shown)
   {
-    h+=`<div class="card"><div class="ct">My Spells <button class="btn sm" onclick="searchSpells()">+ Search</button></div>`;
+    h+=`<div class="card"><div class="ct">Minhas Magias <button class="btn sm" onclick="searchSpells()">+ Buscar</button></div>`;
     const mySpells=c.spells||[];
-    if(!mySpells.length){h+='<div class="muted" style="font-size:12px">No spells yet.</div>'}
+    if(!mySpells.length){h+='<div class="muted" style="font-size:12px">Nenhuma magia ainda.</div>'}
     else{
       const byLvl={};mySpells.forEach((s,i)=>{(byLvl[s.level]=byLvl[s.level]||[]).push({...s,_i:i})});
       Object.keys(byLvl).sort((a,b)=>a-b).forEach(l=>{
-        const ln=l==0?"Cantrips":"Level "+l;
+        const ln=l==0?"Truques":"Círculo "+l;
         h+=`<div class="lbl" style="margin-top:10px">${ln}</div>`;
         byLvl[l].forEach(s=>{
           h+=`<div class="spl" onclick="showSpell(${s._i})">
-            <div class="sph"><div style="flex:1"><span class="spn">${esc(s.name)}</span>${s.conc?' <span class="tag magic">Conc</span>':''}${s.ritual?' <span class="tag info">Ritual</span>':''}</div></div>
+            <div class="sph"><div style="flex:1"><span class="spn">${esc(s.name)}</span>${s.conc?' <span class="tag magic">Conc.</span>':''}${s.ritual?' <span class="tag info">Ritual</span>':''}</div></div>
             <div class="spt">${esc(s.time||"")} · ${esc(s.range||"")} · ${esc(s.duration||"")}</div>
           </div>`;
         });
@@ -830,21 +851,21 @@ function toggleRacialUse(key){
 }
 function showRacialSpell(key,source,firstCol){
   const sp=getSpellByKey(key);if(!sp)return;
-  const lvlLabel=sp.level===0?"Cantrip":"Level "+sp.level;
-  const freq=firstCol==="atwill"?"At Will":firstCol==="oncelr"?"1× / Long Rest":"";
+  const lvlLabel=sp.level===0?"Truque":"Círculo "+sp.level;
+  const freq=firstCol==="atwill"?"À Vontade":firstCol==="oncelr"?"1× / Descanso Longo":"";
   let body=`<div class="notice magic" style="margin-bottom:10px;background:rgba(176,141,224,.1);border-color:rgba(176,141,224,.3)">
     <strong style="color:var(--magic);font-size:14px">${esc(sp.name)}</strong> — ${lvlLabel}
-    <div style="margin-top:3px;font-size:12px">From <strong>${esc(source)}</strong>${freq?" · "+esc(freq):""}</div>
+    <div style="margin-top:3px;font-size:12px">De <strong>${esc(source)}</strong>${freq?" · "+esc(freq):""}</div>
   </div><div style="font-size:13px;color:var(--text2);line-height:1.8">`;
-  if(sp.time)body+=`<div><strong>Casting:</strong> ${esc(sp.time)}</div>`;
-  if(sp.range)body+=`<div><strong>Range:</strong> ${esc(sp.range)}</div>`;
-  if(sp.duration)body+=`<div><strong>Duration:</strong> ${esc(sp.duration)}</div>`;
-  if(sp.components)body+=`<div><strong>Components:</strong> ${esc(sp.components)}</div>`;
+  if(sp.time)body+=`<div><strong>Conjuração:</strong> ${esc(sp.time)}</div>`;
+  if(sp.range)body+=`<div><strong>Alcance:</strong> ${esc(sp.range)}</div>`;
+  if(sp.duration)body+=`<div><strong>Duração:</strong> ${esc(sp.duration)}</div>`;
+  if(sp.components)body+=`<div><strong>Componentes:</strong> ${esc(sp.components)}</div>`;
   if(sp.compMaterial)body+=`<div><strong>Material:</strong> ${esc(sp.compMaterial)}</div>`;
-  if(sp.save)body+=`<div><strong>Save:</strong> ${esc(sp.save)}</div>`;
+  if(sp.save)body+=`<div><strong>Salvaguarda:</strong> ${esc(sp.save)}</div>`;
   if(sp.description)body+=`<div style="margin-top:8px;color:var(--text)">${esc(sp.description)}</div>`;
   body+='</div>';
-  openModal("Racial Spell",body);
+  openModal("Magia Racial",body);
 }
 function toggleSlot(circle,idx){
   const c=chars[currentId];c.spell_slots_used=c.spell_slots_used||{};
@@ -855,20 +876,20 @@ function toggleSlot(circle,idx){
 function searchSpells(){
   const c=chars[currentId];
   const existing=new Set((c.spells||[]).map(s=>s.name));
-  let body=`<div class="f"><input type="text" id="spq" placeholder="Search..." oninput="filterSpellSearch()"></div>
+  let body=`<div class="f"><input type="text" id="spq" placeholder="Buscar..." oninput="filterSpellSearch()"></div>
     <div class="row" style="gap:6px;margin-bottom:8px">
       <select id="spfc" onchange="filterSpellSearch()" style="flex:1">
-        <option value="">All classes</option>
+        <option value="">Todas as classes</option>
         ${DATA.classes.filter(x=>SPELL_CASTER_TYPE[x._key]).map(x=>`<option value="${x._key}"${x._key===c.class?" selected":""}>${esc(x.name)}</option>`).join("")}
       </select>
       <select id="spfl" onchange="filterSpellSearch()" style="flex:1">
-        <option value="">All levels</option>
-        <option value="0">Cantrips</option>
-        ${Array.from({length:9},(_,i)=>`<option value="${i+1}">Level ${i+1}</option>`).join("")}
+        <option value="">Todos os círculos</option>
+        <option value="0">Truques</option>
+        ${Array.from({length:9},(_,i)=>`<option value="${i+1}">Círculo ${i+1}</option>`).join("")}
       </select>
     </div>
     <div id="splist" style="max-height:60vh;overflow-y:auto"></div>`;
-  openModal("Search Spells",body);
+  openModal("Buscar Magias",body);
   filterSpellSearch();
 }
 function filterSpellSearch(){
@@ -883,17 +904,17 @@ function filterSpellSearch(){
     return true;
   }).sort((a,b)=>a.level-b.level||a.name.localeCompare(b.name));
   let h="";
-  if(!results.length){h='<div class="muted" style="padding:8px">No spells found.</div>'}
+  if(!results.length){h='<div class="muted" style="padding:8px">Nenhuma magia encontrada.</div>'}
   else{
     results.forEach((s,ri)=>{
       const added=existing.has(s.name);
       h+=`<div class="spl" ${added?"":`onclick="addSpellByKey(this.dataset.k)"`} data-k="${esc(s._key)}" style="${added?'opacity:.5':''}">
         <div class="sph"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px">
-          <span class="spb">${s.level===0?"Cantrip":"L"+s.level}</span>
+          <span class="spb">${s.level===0?"Truque":"C"+s.level}</span>
           <span class="spn">${esc(s.name)}</span>
-          ${s.duration&&s.duration.indexOf("Conc")>=0?'<span class="tag magic">Conc</span>':''}
+          ${s.duration&&s.duration.indexOf("Conc")>=0?'<span class="tag magic">Conc.</span>':''}
         </div>${added?'<span class="tag ok">✓</span>':'<span class="tag accent">+</span>'}</div>
-        <div class="spt">${esc(s.time||"")} · ${esc(s.range||"")} · ${esc(s.duration||"")}${s.save?" · Save "+s.save:""}</div>
+        <div class="spt">${esc(s.time||"")} · ${esc(s.range||"")} · ${esc(s.duration||"")}${s.save?" · Salv. "+s.save:""}</div>
         ${s.description?`<div style="font-size:11px;color:var(--text2);margin-top:3px;line-height:1.4">${esc(s.description)}</div>`:""}
       </div>`;
     });
@@ -939,9 +960,9 @@ function removeFightingStyle(key){
   pickFightingStyle();
 }
 function searchFeats(){
-  let body=`<div class="f"><input type="text" id="ftq" placeholder="Search feats..." oninput="filterFeatSearch()"></div>
+  let body=`<div class="f"><input type="text" id="ftq" placeholder="Buscar talentos..." oninput="filterFeatSearch()"></div>
     <div id="ftlist" style="max-height:60vh;overflow-y:auto"></div>`;
-  openModal("Add Feat",body);
+  openModal("Adicionar Talento",body);
   filterFeatSearch();
 }
 function filterFeatSearch(){
@@ -950,7 +971,7 @@ function filterFeatSearch(){
   const results=DATA.feats.filter(f=>!q||f.name.toLowerCase().indexOf(q)>=0||(f.description||"").toLowerCase().indexOf(q)>=0)
     .sort((a,b)=>a.name.localeCompare(b.name));
   let h="";
-  if(!results.length){h='<div class="muted" style="padding:8px">No feats found.</div>'}
+  if(!results.length){h='<div class="muted" style="padding:8px">Nenhum talento encontrado.</div>'}
   else{
     results.forEach(f=>{
       const added=existing.has(f._key);
@@ -978,7 +999,7 @@ function beastStatblockHtml(b){
   if(b.speed.swim)spd.push("natação "+b.speed.swim+" ft.");
   if(b.speed.climb)spd.push("escalada "+b.speed.climb+" ft.");
   const abilCell=(label,score)=>`<div class="stat"><div class="sv">${score} (${fmtMod(mod(score))})</div><div class="sl">${label}</div></div>`;
-  let h=`<div class="muted" style="font-size:11px;margin-bottom:8px">CR ${esc(b.crLabel)} (${b.xp} XP) · CA ${b.ac} · PV ${b.hp} (${esc(b.hitDice)}) · Desloc. ${esc(spd.join(", "))}</div>
+  let h=`<div class="muted" style="font-size:11px;margin-bottom:8px">ND ${esc(b.crLabel)} (${b.xp} XP) · CA ${b.ac} · PV ${b.hp} (${esc(b.hitDice)}) · Desloc. ${esc(spd.join(", "))}</div>
     <div class="row" style="flex-wrap:wrap;margin-bottom:8px">
       ${abilCell("FOR",b.abil.str)}${abilCell("DES",b.abil.dex)}${abilCell("CON",b.abil.con)}${abilCell("INT",b.abil.int)}${abilCell("SAB",b.abil.wis)}${abilCell("CAR",b.abil.cha)}
     </div>
@@ -1059,31 +1080,31 @@ function rmManeuver(idx){
 }
 function rmFeat(idx){
   const c=chars[currentId];if(!c.feats||!c.feats[idx])return;
-  if(!confirm("Remove this feat?"))return;
+  if(!confirm("Remover este talento?"))return;
   c.feats.splice(idx,1);saveChars();renderSheet();
 }
 function showSpell(idx){
   const c=chars[currentId];const s=c.spells[idx];if(!s)return;
-  const lvlLabel=s.level===0?"Cantrip":"Level "+s.level;
+  const lvlLabel=s.level===0?"Truque":"Círculo "+s.level;
   let body=`<div class="notice" style="margin-bottom:10px"><strong style="color:var(--accent2);font-size:14px">${esc(s.name)}</strong> — ${lvlLabel}`;
   if(s.school)body+=` · ${esc(s.school)}`;
-  if(s.conc)body+=' · <span style="color:var(--magic)">Concentration</span>';
+  if(s.conc)body+=' · <span style="color:var(--magic)">Concentração</span>';
   if(s.ritual)body+=' · <span style="color:var(--info)">Ritual</span>';
   body+='</div><div style="font-size:13px;color:var(--text2);line-height:1.8">';
-  if(s.time)body+=`<div><strong>Casting:</strong> ${esc(s.time)}</div>`;
-  if(s.range)body+=`<div><strong>Range:</strong> ${esc(s.range)}</div>`;
-  if(s.duration)body+=`<div><strong>Duration:</strong> ${esc(s.duration)}</div>`;
-  if(s.components)body+=`<div><strong>Components:</strong> ${esc(s.components)}</div>`;
+  if(s.time)body+=`<div><strong>Conjuração:</strong> ${esc(s.time)}</div>`;
+  if(s.range)body+=`<div><strong>Alcance:</strong> ${esc(s.range)}</div>`;
+  if(s.duration)body+=`<div><strong>Duração:</strong> ${esc(s.duration)}</div>`;
+  if(s.components)body+=`<div><strong>Componentes:</strong> ${esc(s.components)}</div>`;
   if(s.material)body+=`<div><strong>Material:</strong> ${esc(s.material)}</div>`;
-  if(s.save)body+=`<div><strong>Save:</strong> ${esc(s.save)}</div>`;
+  if(s.save)body+=`<div><strong>Salvaguarda:</strong> ${esc(s.save)}</div>`;
   if(s.description)body+=`<div style="margin-top:8px;color:var(--text)">${esc(s.description)}</div>`;
   body+='</div>';
-  openModal("Spell Details",body,`<button class="btn" onclick="closeModal()">Close</button><button class="btn danger" onclick="rmSpell(${idx})">✕ Remove</button>`);
+  openModal("Detalhes da Magia",body,`<button class="btn" onclick="closeModal()">Fechar</button><button class="btn danger" onclick="rmSpell(${idx})">✕ Remover</button>`);
 }
 function rmSpell(i){chars[currentId].spells.splice(i,1);saveChars();closeModal();renderSheet()}
 
 function addLang(){
-  const v=prompt("Language name:");
+  const v=prompt("Nome do idioma:");
   if(!v||!v.trim())return;
   const c=chars[currentId];
   if(!c.extra_langs)c.extra_langs=[];
