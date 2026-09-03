@@ -4,16 +4,16 @@
 // CONSTANTS & DATA LOOKUPS
 // ======================================================================
 const ABILS = ["str","dex","con","int","wis","cha"];
-const ABIL_NAMES = {str:"Strength",dex:"Dexterity",con:"Constitution",int:"Intelligence",wis:"Wisdom",cha:"Charisma"};
-const ABIL_SHORT = {str:"STR",dex:"DEX",con:"CON",int:"INT",wis:"WIS",cha:"CHA"};
+const ABIL_NAMES = {str:"Força",dex:"Destreza",con:"Constituição",int:"Inteligência",wis:"Sabedoria",cha:"Carisma"};
+const ABIL_SHORT = {str:"For",dex:"Des",con:"Con",int:"Int",wis:"Sab",cha:"Car"};
 
 // Skills map: skill name → ability
 const SKILLS = [
-  ["Acrobatics","dex"],["Animal Handling","wis"],["Arcana","int"],["Athletics","str"],
-  ["Deception","cha"],["History","int"],["Insight","wis"],["Intimidation","cha"],
-  ["Investigation","int"],["Medicine","wis"],["Nature","int"],["Perception","wis"],
-  ["Performance","cha"],["Persuasion","cha"],["Religion","int"],["Sleight of Hand","dex"],
-  ["Stealth","dex"],["Survival","wis"]
+  ["Acrobacia","dex"],["Lidar com Animais","wis"],["Arcanismo","int"],["Atletismo","str"],
+  ["Enganação","cha"],["História","int"],["Intuição","wis"],["Intimidação","cha"],
+  ["Investigação","int"],["Medicina","wis"],["Natureza","int"],["Percepção","wis"],
+  ["Atuação","cha"],["Persuasão","cha"],["Religião","int"],["Prestidigitação","dex"],
+  ["Furtividade","dex"],["Sobrevivência","wis"]
 ];
 
 // Point buy costs
@@ -165,7 +165,7 @@ function getRacialSpells(c){
           f.grants_spells.forEach(g=>{
             (g.spells||[]).forEach(k=>{
               const sp=getSpellByKey(k);
-              if(sp)out.push({spell:sp,source:sr.name+" (lv "+f.lvl+")",firstCol:g.firstCol||"oncelr",lineage:g.name});
+              if(sp)out.push({spell:sp,source:sr.name+" (nv "+f.lvl+")",firstCol:g.firstCol||"oncelr",lineage:g.name});
             });
           });
         }
@@ -243,7 +243,7 @@ function show(screenId){["home","create","sheet"].forEach(s=>el(s).classList.tog
 function openModal(title, bodyHtml, footerHtml){
   el("modal-title").textContent = title;
   el("modal-body").innerHTML = bodyHtml;
-  el("modal-ft").innerHTML = footerHtml || '<button class="btn" onclick="closeModal()">Close</button>';
+  el("modal-ft").innerHTML = footerHtml || '<button class="btn" onclick="closeModal()">Fechar</button>';
   el("modalbg").classList.add("open");
 }
 function closeModal(){el("modalbg").classList.remove("open")}
@@ -252,8 +252,8 @@ function closeModal(){el("modalbg").classList.remove("open")}
 // THEME SYSTEM
 // ======================================================================
 const THEMES = [
-  {name:"Light",  modern:true, accent:"#0a0a0a",accent2:"#222222",bg:"#f4f4f5",bg2:"#ffffff",bg3:"#fafafa",card:"#ffffff",border:"#e6e6e8",text:"#0a0a0a",text2:"#737378",text3:"#a1a1aa",danger:"#dc2626",danger2:"#ef4444"},
-  {name:"Dark",   accent:"#c8c8c8",accent2:"#e8e8e8",bg:"#000000",bg2:"#0d0d0d",bg3:"#161616",card:"#111111",border:"#2a2a2a",text:"#c8c8c8",text2:"#888888",text3:"#555555",danger:"#6a1414",danger2:"#e04545"}
+  {name:"Claro",  modern:true, accent:"#0a0a0a",accent2:"#222222",bg:"#f4f4f5",bg2:"#ffffff",bg3:"#fafafa",card:"#ffffff",border:"#e6e6e8",text:"#0a0a0a",text2:"#737378",text3:"#a1a1aa",danger:"#dc2626",danger2:"#ef4444"},
+  {name:"Escuro", accent:"#c8c8c8",accent2:"#e8e8e8",bg:"#000000",bg2:"#0d0d0d",bg3:"#161616",card:"#111111",border:"#2a2a2a",text:"#c8c8c8",text2:"#888888",text3:"#555555",danger:"#6a1414",danger2:"#e04545"}
 ];
 function applyTheme(t){
   const r=document.documentElement.style;
@@ -262,12 +262,12 @@ function applyTheme(t){
   document.body.classList.toggle("modern",!!t.modern);
   try{localStorage.setItem("dnd24_theme",JSON.stringify(t))}catch(e){}
   el("themename").textContent = t.name;
-  const tb=el("themebtn");if(tb)tb.textContent=t.name==="Dark"?"☀︎":"☾";
+  const tb=el("themebtn");if(tb)tb.textContent=t.name==="Escuro"?"☀︎":"☾";
   document.querySelectorAll(".sw").forEach((s,i)=>s.classList.toggle("active",THEMES[i]&&THEMES[i].name===t.name));
 }
 function toggleTheme(){
-  const cur=el("themename").textContent||"Dark";
-  const next=cur==="Dark"?THEMES[0]:THEMES[1];
+  const cur=el("themename").textContent||"Escuro";
+  const next=cur==="Escuro"?THEMES[0]:THEMES[1];
   applyTheme(next);
 }
 function applyCustom(hex){
@@ -275,7 +275,7 @@ function applyCustom(hex){
   function hexToHsl(h){h=h.replace("#","");const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let hue=0,s=0;const l=(max+min)/2;if(max!==min){const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);switch(max){case r:hue=((g-b)/d+(g<b?6:0))/6;break;case g:hue=((b-r)/d+2)/6;break;case b:hue=((r-g)/d+4)/6;break}}return[Math.round(hue*360),s*100,l*100]}
   function hslToHex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,"0")};return "#"+f(0)+f(8)+f(4)}
   const [h,s,l]=hexToHsl(hex);
-  const t={name:"Custom",accent:hex,accent2:hslToHex(h,Math.min(100,s),Math.min(90,l+20)),
+  const t={name:"Personalizado",accent:hex,accent2:hslToHex(h,Math.min(100,s),Math.min(90,l+20)),
     bg:hslToHex(h,Math.max(20,s*.4),3),bg2:hslToHex(h,Math.max(20,s*.4),8),bg3:hslToHex(h,Math.max(20,s*.35),12),
     card:hslToHex(h,Math.max(15,s*.3),14),border:hslToHex(h,Math.max(15,s*.3),22),
     text:hslToHex(h,Math.max(20,s*.3),92),text2:hslToHex(h,Math.max(15,s*.25),68),text3:hslToHex(h,Math.max(10,s*.2),42),

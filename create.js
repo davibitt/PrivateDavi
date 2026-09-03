@@ -379,10 +379,10 @@ function stepSkills(){
 }
 function parseClassSkills(text){
   if(!text)return {choose:2,options:[]};
-  const m=text.match(/Choose (\d+)[:\s]+(.+)/i);
+  const m=text.match(/Escolha (\d+)[:\s]+(.+)/i);
   if(!m)return {choose:2,options:[]};
   const choose=parseInt(m[1]);
-  const rest=m[2].replace(/\s+or\s+/gi,",");
+  const rest=m[2].replace(/\s+ou\s+/gi,",");
   const options=rest.split(/[,;]/).map(s=>s.trim()).filter(s=>s.length);
   return {choose,options};
 }
