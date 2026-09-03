@@ -112,14 +112,19 @@ function getManeuver(key){return (DATA.maneuvers||[]).find(m=>m._key===key)}
 function getBeast(key){return (DATA.beasts||[]).find(b=>b._key===key)}
 
 // Parse the weapon mastery keyword out of a weapon's description (the last
-// ";"-separated segment, e.g. "Finesse, Light, Thrown; Nick" -> "Nick") and
-// look it up in DATA.weaponMasteries. Returns {key,name,desc} or null.
+// ";"-separated segment, e.g. "Acuidade, Leve, Arremesso; Ágil" -> "Ágil") and
+// look it up in DATA.weaponMasteries by its translated display name.
+// Returns {key,name,desc} or null.
 function getWeaponMastery(wd){
   if(!wd||!wd.description)return null;
   const parts=wd.description.split(";");
   const last=parts[parts.length-1].trim().toLowerCase();
-  const m=(DATA.weaponMasteries||{})[last];
-  return m?{key:last,name:m.name,desc:m.desc}:null;
+  const masteries=DATA.weaponMasteries||{};
+  for(const key in masteries){
+    const m=masteries[key];
+    if(m.name&&m.name.toLowerCase()===last)return{key,name:m.name,desc:m.desc};
+  }
+  return null;
 }
 // Small HTML block explaining a weapon's mastery property, or "" if none.
 function masteryHtml(wd){

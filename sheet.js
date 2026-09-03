@@ -171,8 +171,8 @@ function fightingStyleWeaponBonus(styles,wd){
   const desc=(wd.description||"").toLowerCase();
   const isRanged=wd.list==="ranged";
   const isMelee=wd.list==="melee"&&wd.type!=="Natural";
-  const isTwoHanded=desc.indexOf("two-handed")>=0;
-  const isThrown=desc.indexOf("thrown")>=0;
+  const isTwoHanded=desc.indexOf("duas mãos")>=0;
+  const isThrown=desc.indexOf("arremesso")>=0;
   if(styles.has("archery")&&isRanged){atk+=2;tags.push("Archery +2 acerto");}
   if(styles.has("dueling")&&isMelee&&!isTwoHanded){dmg+=2;tags.push("Dueling +2 dano");}
   if(styles.has("thrown weapon fighting")&&isThrown){dmg+=2;tags.push("Arremesso +2 dano");}
@@ -512,7 +512,7 @@ function renderCombat(c,cls,lvl,p){
     c.weapons.forEach((w,i)=>{
       const wd=getWeapon(w.key);if(!wd)return;
       const ab=wd.ability==="Dex"?"dex":"str";
-      const isFin=(wd.description||"").toLowerCase().indexOf("finesse")>=0;
+      const isFin=(wd.description||"").toLowerCase().indexOf("acuidade")>=0;
       const useAbil=isFin?(mod(c.attrs.str)>=mod(c.attrs.dex)?"str":"dex"):ab;
       const fs=fightingStyleWeaponBonus(fightingStyles,wd);
       const atkMod=mod(c.attrs[useAbil])+p+(w.mag||0)+fs.atk;
@@ -539,7 +539,7 @@ function renderCombat(c,cls,lvl,p){
     const wd=getWeapon(def.weaponKey);if(!wd)return;
     const bonus=mi.bonus||0;
     const ab=wd.ability==="Dex"?"dex":"str";
-    const isFin=(wd.description||"").toLowerCase().indexOf("finesse")>=0;
+    const isFin=(wd.description||"").toLowerCase().indexOf("acuidade")>=0;
     const useAbil=isFin?(mod(c.attrs.str)>=mod(c.attrs.dex)?"str":"dex"):ab;
     const fs=fightingStyleWeaponBonus(fightingStyles,wd);
     const atkMod=mod(c.attrs[useAbil])+p+bonus+fs.atk;
