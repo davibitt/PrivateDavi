@@ -251,38 +251,34 @@ function closeModal(){el("modalbg").classList.remove("open")}
 // ======================================================================
 // THEME SYSTEM
 // ======================================================================
+// Each theme is just a body class — all colors/shapes/mist live in style.css
+// (:root = Escuro/dark, body.modern = Claro/light, body.claude = Claude).
 const THEMES = [
-  {name:"Claro",  modern:true, accent:"#0a0a0a",accent2:"#222222",bg:"#f4f4f5",bg2:"#ffffff",bg3:"#fafafa",card:"#ffffff",border:"#e6e6e8",text:"#0a0a0a",text2:"#737378",text3:"#a1a1aa",danger:"#dc2626",danger2:"#ef4444"},
-  {name:"Escuro", accent:"#c8c8c8",accent2:"#e8e8e8",bg:"#000000",bg2:"#0d0d0d",bg3:"#161616",card:"#111111",border:"#2a2a2a",text:"#c8c8c8",text2:"#888888",text3:"#555555",danger:"#6a1414",danger2:"#e04545"}
+  {name:"Claro",  cls:"modern", icon:"☾"},
+  {name:"Escuro", cls:"",       icon:"✦"},
+  {name:"Claude", cls:"claude", icon:"☀︎"}
 ];
 function applyTheme(t){
-  const r=document.documentElement.style;
-  Object.keys(t).forEach(k=>{if(k==="name"||k==="modern")return;r.setProperty("--"+k.replace(/2$/,"2"),t[k])});
-  document.body.style.background=t.bg;
-  document.body.classList.toggle("modern",!!t.modern);
-  try{localStorage.setItem("dnd24_theme",JSON.stringify(t))}catch(e){}
+  document.body.classList.remove("modern","claude");
+  const cls=t.cls!==undefined?t.cls:(t.modern?"modern":"");
+  cls.split(" ").filter(Boolean).forEach(c=>document.body.classList.add(c));
+  try{localStorage.setItem("dnd24_theme",JSON.stringify({name:t.name,cls}))}catch(e){}
   el("themename").textContent = t.name;
-  const tb=el("themebtn");if(tb)tb.textContent=t.name==="Escuro"?"☀︎":"☾";
+  const tb=el("themebtn");if(tb)tb.textContent=t.icon||"☾";
   document.querySelectorAll(".sw").forEach((s,i)=>s.classList.toggle("active",THEMES[i]&&THEMES[i].name===t.name));
 }
 function toggleTheme(){
   const cur=el("themename").textContent||"Escuro";
-  const next=cur==="Escuro"?THEMES[0]:THEMES[1];
-  applyTheme(next);
+  const idx=THEMES.findIndex(t=>t.name===cur);
+  applyTheme(THEMES[(idx+1+THEMES.length)%THEMES.length]||THEMES[0]);
 }
-function applyCustom(hex){
-  // Build theme from hex: derive accent/accent2/bg/card/etc
-  function hexToHsl(h){h=h.replace("#","");const r=parseInt(h.slice(0,2),16)/255,g=parseInt(h.slice(2,4),16)/255,b=parseInt(h.slice(4,6),16)/255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let hue=0,s=0;const l=(max+min)/2;if(max!==min){const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);switch(max){case r:hue=((g-b)/d+(g<b?6:0))/6;break;case g:hue=((b-r)/d+2)/6;break;case b:hue=((r-g)/d+4)/6;break}}return[Math.round(hue*360),s*100,l*100]}
-  function hslToHex(h,s,l){s/=100;l/=100;const a=s*Math.min(l,1-l);const f=n=>{const k=(n+h/30)%12;const c=l-a*Math.max(Math.min(k-3,9-k,1),-1);return Math.round(255*c).toString(16).padStart(2,"0")};return "#"+f(0)+f(8)+f(4)}
-  const [h,s,l]=hexToHsl(hex);
-  const t={name:"Personalizado",accent:hex,accent2:hslToHex(h,Math.min(100,s),Math.min(90,l+20)),
-    bg:hslToHex(h,Math.max(20,s*.4),3),bg2:hslToHex(h,Math.max(20,s*.4),8),bg3:hslToHex(h,Math.max(20,s*.35),12),
-    card:hslToHex(h,Math.max(15,s*.3),14),border:hslToHex(h,Math.max(15,s*.3),22),
-    text:hslToHex(h,Math.max(20,s*.3),92),text2:hslToHex(h,Math.max(15,s*.25),68),text3:hslToHex(h,Math.max(10,s*.2),42),
-    danger:hslToHex(h,Math.max(40,s),18),danger2:hslToHex(h,Math.max(40,s),35)};
-  applyTheme(t);
+function loadTheme(){
+  try{
+    const t=JSON.parse(localStorage.getItem("dnd24_theme"));
+    if(t){applyTheme(THEMES.find(x=>x.name===t.name)||t);return}
+  }catch(e){}
+  applyTheme(THEMES[0]);
 }
-function loadTheme(){try{const t=JSON.parse(localStorage.getItem("dnd24_theme"));if(t){applyTheme(t);return}}catch(e){}applyTheme(THEMES[0])}
 
 // ======================================================================
 // HOME

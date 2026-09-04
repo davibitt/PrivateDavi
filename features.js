@@ -245,7 +245,7 @@ function openSlotPicker(slotKey){
                     (cat==="shield"&&c.inv_shield===it.id&&c.equipped_slots[slotKey]==null);
         const tag=isCur?'<span class="tag ok" style="font-size:10px">Equipado aqui</span>':"";
         rows+=`<div class="opt" onclick="equipNormalToSlot('${slotKey}','${it.id}')">
-          <div class="on">${esc(it.name)} ${tag}</div>
+          <div class="on">${esc(normalItemDisplayName(it))} ${tag}</div>
           <div class="od" style="display:block;font-size:11px;color:var(--text3)">${esc(info)}</div>
         </div>`;
       });

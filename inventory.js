@@ -44,13 +44,22 @@ function migrateInvWeaponsToWeapons(c){
   saveChars();
 }
 
+function weaponDisplayName(w){
+  const wd=getWeapon(w.key);
+  return w.custom_name||(wd?wd.name:w.name);
+}
+function normalItemDisplayName(it){
+  if(it.cat==="armor"){const arm=getArmor(it.key);if(arm)return arm.name;}
+  return it.name;
+}
+
 function renderInventory(c,cls,lvl,p){
   migrateInvWeaponsToWeapons(c);
   const inv=c.inv||[];
   const eqSlots=c.equipped_slots||{};
   let h="";
 
-  // === Itens Normais ===
+  // === Itens Normais (armas, armaduras, escudos, poções e outros) ===
   h+=`<div class="card"><div class="ct">Itens Normais <button class="btn sm" onclick="addNormalItem()">+ Adicionar</button></div>`;
   const weapons=c.weapons||[];
   if(!inv.length&&!weapons.length){
@@ -58,10 +67,10 @@ function renderInventory(c,cls,lvl,p){
   } else {
     if(weapons.length){
       h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Armas <span style="text-transform:none;letter-spacing:normal">(gerencie na aba Combate)</span></div>`;
-      weapons.slice().map((w,i)=>({w,i})).sort((a,b)=>(a.w.custom_name||a.w.name||"").localeCompare(b.w.custom_name||b.w.name||"")).forEach(({w,i})=>{
+      weapons.slice().map((w,i)=>({w,i})).sort((a,b)=>weaponDisplayName(a.w).localeCompare(weaponDisplayName(b.w))).forEach(({w,i})=>{
         h+=`<div class="opt" onclick="openWeaponDetails(${i})">
           <div class="on" style="display:flex;align-items:center;gap:6px">
-            <span style="flex:1">${esc(w.custom_name||w.name)}${w.mag?` <span class="tag accent">+${w.mag}</span>`:""}</span>
+            <span style="flex:1">${esc(weaponDisplayName(w))}${w.mag?` <span class="tag accent">+${w.mag}</span>`:""}</span>
             <span class="lvtag">▸</span>
           </div>
         </div>`;
@@ -72,19 +81,32 @@ function renderInventory(c,cls,lvl,p){
     const catLabels={armor:"Armaduras",shield:"Escudos"};
     ["armor","shield"].forEach(cat=>{
       if(!groups[cat].length)return;
-      groups[cat].sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+      groups[cat].sort((a,b)=>normalItemDisplayName(a).localeCompare(normalItemDisplayName(b)));
       h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">${catLabels[cat]}</div>`;
       groups[cat].forEach(it=>{
         const isEq=(cat==="armor"&&c.armor===it.key)||(cat==="shield"&&c.inv_shield===it.id);
         h+=`<div class="opt" onclick="openNormalItemDetail('${esc(it.id)}')">
           <div class="on" style="display:flex;align-items:center;gap:6px">
-            <span style="flex:1">${esc(it.name)}${it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""}</span>
+            <span style="flex:1">${esc(normalItemDisplayName(it))}${it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""}</span>
             ${isEq?'<span class="tag ok" style="font-size:10px">Equipado</span>':''}
             <span class="lvtag">▸</span>
           </div>
           ${it.note?`<div class="od" style="display:block;font-size:11px">${esc(it.note.slice(0,80))}</div>`:""}
         </div>`;
       });
+    });
+  }
+
+  const otherItems=c.items||[];
+  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Poções e Outros <button class="btn sm" onclick="newItem()" style="margin-left:6px">+ Adicionar</button></div>`;
+  if(!otherItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum item. Toque em "+ Adicionar".</div>';}
+  else{
+    otherItems.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(it=>{
+      const preview=(it.body||"").slice(0,60).replace(/\n/g," ");
+      h+=`<div class="opt" onclick="openItem('${esc(it.id)}')">
+        <div class="on">${esc(it.title||"(sem título)")}${it.qty&&it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""} <span class="lvtag">▸</span></div>
+        ${preview?`<div class="od" style="display:block;font-size:11px">${esc(preview)}${it.body&&it.body.length>60?"…":""}</div>`:""}
+      </div>`;
     });
   }
   h+='</div>';
@@ -122,28 +144,6 @@ function renderInventory(c,cls,lvl,p){
           ${bonusTag}${resTag}${statusTag}
         </div>
         <div class="od" style="display:block;font-size:11px;color:var(--text3)">${esc(slotLabel)}</div>
-      </div>`;
-    });
-  }
-  h+='</div>';
-
-  // === Ver Inventário ===
-  h+='<div class="card"><div class="ct">Ver Inventário</div>';
-  const equipItems=(c.inv||[]).filter(x=>x.cat==="armor"||x.cat==="shield").sort((a,b)=>a.name.localeCompare(b.name));
-  const otherItems=c.items||[];
-
-  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Equipamentos</div>`;
-  if(!equipItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum equipamento no inventário.</div>';}
-  else equipItems.forEach(it=>{h+=`<div class="opt"><div class="on">${esc(it.name)}${it.qty>1?` ×${it.qty}`:""}</div></div>`;});
-
-  h+=`<div class="muted" style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 4px;color:var(--accent2)">Poções e Outros <button class="btn sm" onclick="newItem()" style="margin-left:6px">+ Adicionar</button></div>`;
-  if(!otherItems.length){h+='<div class="muted" style="font-size:12px;padding:4px 0">Nenhum item. Toque em "+ Adicionar".</div>';}
-  else{
-    otherItems.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(it=>{
-      const preview=(it.body||"").slice(0,60).replace(/\n/g," ");
-      h+=`<div class="opt" onclick="openItem('${esc(it.id)}')">
-        <div class="on">${esc(it.title||"(sem título)")}${it.qty&&it.qty>1?` <span class="tag accent">×${it.qty}</span>`:""} <span class="lvtag">▸</span></div>
-        ${preview?`<div class="od" style="display:block;font-size:11px">${esc(preview)}${it.body&&it.body.length>60?"…":""}</div>`:""}
       </div>`;
     });
   }
@@ -237,7 +237,7 @@ function openNormalItemDetail(id){
     <div style="font-size:12px">Quantidade: <strong>${it.qty||1}</strong></div>
     ${isEq?'<div style="margin-top:8px"><span class="tag ok">Equipado</span></div>':""}`;
   const canEquip=(it.cat==="armor"||it.cat==="shield")&&!isEq;
-  openModal(it.name,body,
+  openModal(normalItemDisplayName(it),body,
     `<button class="btn danger" onclick="deleteNormalItem('${esc(id)}')">✕ Remover</button>
      ${canEquip?`<button class="btn" onclick="equipNormalFromInv('${esc(id)}')">Equipar</button>`:""}
      ${isEq?`<button class="btn" onclick="unequipNormalFromInv('${esc(id)}')">Desequipar</button>`:""}
