@@ -13,34 +13,53 @@
   --mist-3:rgba(79,142,247,.3);
 }
 *{box-sizing:border-box}
-html,body{min-height:100vh;margin:0;background:var(--bg);color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px;-webkit-font-smoothing:antialiased}
+html,body{min-height:100vh;margin:0;color:var(--text);font-family:'Crimson Text',Georgia,serif;font-size:15px;-webkit-font-smoothing:antialiased}
+/* Only <body> gets a background (its --bg is what each theme class overrides).
+   <html> is left with none on purpose: the UA then propagates body's background
+   to the canvas instead of painting it at body's own box, which otherwise would
+   paint over (hide) the negative z-index #mist layer. */
+body{background:var(--bg)}
 
-/* =========== AMBIENT MIST (soft moving glow, top of screen) =========== */
-body::before{
-  content:"";
+/* =========== AMBIENT MIST (volumetric-looking moving glow, top of screen) ===========
+   Three independently-drifting blurred blobs, composited and then pushed through an
+   SVG fractal-noise displacement filter so the smooth circles break up into an
+   irregular, cloud-like shape with denser/lighter patches instead of a flat gradient. */
+#mist{
   position:fixed;
   top:0;left:0;right:0;
-  height:56vh;
-  min-height:340px;
+  height:58vh;
+  min-height:360px;
   pointer-events:none;
   z-index:-1;
-  filter:blur(70px);
-  background-repeat:no-repeat;
-  background-image:
-    radial-gradient(circle at 30% 12%, var(--mist-1) 0%, transparent 60%),
-    radial-gradient(circle at 72% 6%,  var(--mist-2) 0%, transparent 55%),
-    radial-gradient(circle at 50% 30%, var(--mist-3) 0%, transparent 65%);
-  background-size:200% 200%;
-  animation:mistDrift 26s ease-in-out infinite;
+  filter:url(#mistTurb) blur(34px);
 }
-@keyframes mistDrift{
-  0%,100%{background-position:25% 10%, 75% 0%,  50% 30%; opacity:.85}
-  25%    {background-position:42% 26%, 58% 16%, 28% 42%; opacity:1}
-  50%    {background-position:14% 4%,  70% 32%, 56% 14%; opacity:.78}
-  75%    {background-position:36% 20%, 48% 4%,  22% 34%; opacity:.95}
+#mist i{
+  position:absolute;
+  border-radius:50%;
+  background:radial-gradient(circle, var(--mist-1) 0%, transparent 70%);
+  will-change:transform;
+}
+#mist i:nth-child(1){width:75vw;height:75vw;top:-32%;left:-15%;background-image:radial-gradient(circle, var(--mist-1) 0%, transparent 70%);animation:mistA 23s ease-in-out infinite alternate}
+#mist i:nth-child(2){width:64vw;height:64vw;top:-28%;right:-18%;background-image:radial-gradient(circle, var(--mist-2) 0%, transparent 70%);animation:mistB 29s ease-in-out infinite alternate}
+#mist i:nth-child(3){width:58vw;height:58vw;top:-12%;left:22%;background-image:radial-gradient(circle, var(--mist-3) 0%, transparent 70%);animation:mistC 19s ease-in-out infinite alternate}
+
+@keyframes mistA{
+  0%  {transform:translate(0,0) scale(1)}
+  50% {transform:translate(9vw,5vh) scale(1.18)}
+  100%{transform:translate(-5vw,7vh) scale(.92)}
+}
+@keyframes mistB{
+  0%  {transform:translate(0,0) scale(1)}
+  50% {transform:translate(-7vw,6vh) scale(.88)}
+  100%{transform:translate(6vw,-4vh) scale(1.12)}
+}
+@keyframes mistC{
+  0%  {transform:translate(0,0) scale(1)}
+  50% {transform:translate(5vw,-5vh) scale(1.08)}
+  100%{transform:translate(-7vw,3vh) scale(.9)}
 }
 @media (prefers-reduced-motion: reduce){
-  body::before{animation:none}
+  #mist i{animation:none}
 }
 
 h1,h2,h3,.cin{font-family:'Cinzel',serif;font-weight:600}

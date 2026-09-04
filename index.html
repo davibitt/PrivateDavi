@@ -11,6 +11,16 @@
 </head>
 <body>
 
+<!-- Ambient mist: decorative, no JS. The turbulence filter warps the blurred
+     blobs below into an irregular volumetric shape instead of flat circles. -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden">
+  <filter id="mistTurb" x="-40%" y="-40%" width="180%" height="180%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.011 0.017" numOctaves="2" seed="7" result="n"/>
+    <feDisplacementMap in="SourceGraphic" in2="n" scale="90" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<div id="mist" aria-hidden="true"><i></i><i></i><i></i></div>
+
 <!-- ============= HOME ============= -->
 <div id="home" class="screen active">
   <div style="text-align:center;padding:20px 0 14px">
